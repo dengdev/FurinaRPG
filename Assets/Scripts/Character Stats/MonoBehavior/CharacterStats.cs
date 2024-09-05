@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 角色属性
+/// </summary>
 public class CharacterStats : MonoBehaviour
 {
     // 事件，用于更新血量条
@@ -15,7 +18,7 @@ public class CharacterStats : MonoBehaviour
 
     [HideInInspector]
     public bool isCritical; // 是否触发暴击
-    public int previousState;
+    public int previousState; // 受击后恢复到上一状态
 
     private Animator animator;
     private bool isHit; // 标志是否在受击动画中
@@ -58,27 +61,35 @@ public class CharacterStats : MonoBehaviour
     #region Character Combat
 
     /// <summary>
-    /// 计算并应用伤害
+    /// 计算角色伤害
     /// </summary>
-    /// <param name="attacker">攻击者</param>
-    /// <param name="defender">被攻击者</param>
     public void TakeDamage(CharacterStats attacker, CharacterStats defender)
     {
         if (attacker == null || defender == null) return;
 
-        int damage = CalculateDamage(attacker.CurrentDamage(), defender.CurrentDefence);
-        ApplyDamage(damage, defender);
+        // 1. 先计算攻击-防御后的基础伤害
+        int baseDamage = CalculateDamage(attacker.CurrentDamage(), defender.CurrentDefence);
 
+        // 2. 在攻击-防御后的基础伤害上再进行暴击判定
+        if (isCritical)
+        {
+            baseDamage = (int)(baseDamage * attackData.criticalMultiplier);
+            Debug.Log($"{name} 触发暴击");
+        }
+
+        // 3. 应用最终伤害
+        ApplyDamage(baseDamage, defender);
+        // 4. 播放受击动画
         TriggerHitAnimation(defender);
+        // 5. 更新血量 UI
         UpdateHealthUI();
+        // 6. 检查是否死亡
         CheckDeath(attacker, defender);
     }
 
     /// <summary>
-    /// 处理物体伤害
+    /// 处理非直接攻击伤害（如石头等）
     /// </summary>
-    /// <param name="damage">物体基础伤害</param>
-    /// <param name="defender">被攻击者</param>
     public void TakeDamage(int damage, CharacterStats defender)
     {
         if (defender == null) return;
@@ -92,45 +103,35 @@ public class CharacterStats : MonoBehaviour
     }
 
     /// <summary>
-    /// 随机计算伤害值，并考虑暴击
+    /// 计算当前攻击的直接伤害
     /// </summary>
-    /// <returns>计算后的伤害值</returns>
     private int CurrentDamage()
     {
         if (attackData == null) return 0;
-
-        float baseDamage = UnityEngine.Random.Range(attackData.minDamage, attackData.maxDamage);
-        if (isCritical)
-        {
-            baseDamage *= attackData.criticalMultiplier;
-            Debug.Log($"{name} 造成了 {baseDamage} 点暴击伤害！");
-        }
-        else
-        {
-            Debug.Log($"{name} 造成了 {baseDamage} 点伤害");
-        }
-
-        return Mathf.RoundToInt(baseDamage);
+        // 随机选择伤害区间内的一个值
+        return Mathf.RoundToInt(UnityEngine.Random.Range(attackData.minDamage, attackData.maxDamage));
     }
 
     /// <summary>
-    /// 计算最终伤害值
+    /// 攻击-防御之后的伤害
     /// </summary>
     private int CalculateDamage(int damage, int defence)
     {
-        return Mathf.Max(damage - defence, 0);
+        // 确保伤害最小为1
+        return Mathf.Max(damage - defence, 1);
     }
 
     /// <summary>
-    /// 应用伤害
+    ///应用伤害，保证角色血量不为负数
     /// </summary>
     private void ApplyDamage(int damage, CharacterStats defender)
     {
         defender.CurrentHealth = Mathf.Max(defender.CurrentHealth - damage, 0);
+        Debug.Log(defender.name + "受到了" + damage + "点伤害");
     }
 
     /// <summary>
-    /// 检查角色是否死亡并处理
+    /// 检查角色是否死亡
     /// </summary>
     private void CheckDeath(CharacterStats attacker, CharacterStats defender)
     {

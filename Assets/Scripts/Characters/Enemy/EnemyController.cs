@@ -3,87 +3,88 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-// 确保该组件必须附加在带有 NavMeshAgent 和 CharacterStats 组件的游戏对象上
+// 确保该组件附加在具有 NavMeshAgent 和 CharacterStats 组件的对象上
 [RequireComponent(typeof(NavMeshAgent), typeof(CharacterStats))]
 
-public class EnemyController : MonoBehaviour,IEndGameObserver
+public class EnemyController : MonoBehaviour, IEndGameObserver
 {
     private EnemyState enemyState; // 敌人的当前状态 (巡逻、追击、守卫等)
     private NavMeshAgent agent; // 用于路径导航的组件
     private Animator animator; // 控制敌人动画的组件
-    private Collider coll; // 敌人的碰撞体，用于控制敌人的碰撞检测
-    protected CharacterStats characterStats; // 敌人的属性数据 (生命值、攻击力等)
+    private Collider coll; // 敌人的碰撞体，用于检测碰撞
+    protected CharacterStats enemyStats; // 敌人的属性数据 (生命值、攻击力等)
 
     [Header("Basic Settings")]
     public float sightRadius; // 敌人的视野范围
     public bool isGuard; // 判断敌人是守卫模式还是巡逻模式
-    public float lookAtTime; // 敌人停止移动后，观察周围的时间
-    private float speed; // 敌人的移动速度
+    public float lookAtTime; // 敌人停止移动后观察环境的时间
+    private float movementSpeed; // 敌人的移动速度
     private float remainLookAtTime; // 剩余的观察时间
     protected GameObject attackTarget; // 当前攻击目标
 
     [Header("Partol State")]
-    public float partolRange; // 巡逻范围
-    private Vector3 wayPoint; // 巡逻的目标点
+    public float patrolRange; // 巡逻范围
+    private Vector3 patrolPoint; // 巡逻的目标点
     private float lastAttackTime; // 上次攻击的时间，用于控制攻击间隔
-    private Vector3 guardPos; // 守卫模式下敌人的初始位置
+    private Vector3 guardPosition; // 守卫模式下敌人的初始位置
     private Quaternion guardRotation; // 守卫模式下敌人的初始朝向
+
+    [Header("Alert Settings")]
+    public float alertTime = 2f; // 警觉时间
+    private float alertTimer; // 当前的警觉计时器
 
     // 控制动画状态的布尔值
     bool isWalking, isChasing, isFollow, isDead;
     bool playerDead; // 玩家是否死亡
 
+    // 初始化组件和变量
     void Awake()
     {
-        // 初始化组件和变量
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         coll = GetComponent<Collider>();
-        characterStats = GetComponent<CharacterStats>();
+        enemyStats = GetComponent<CharacterStats>();
 
-        speed = agent.speed; // 记录初始的移动速度
-        guardPos = transform.position; // 记录守卫模式下的初始位置
-        guardRotation = transform.rotation; // 记录守卫模式下的初始朝向
-        remainLookAtTime = lookAtTime; // 初始化剩余观察时间
+        movementSpeed = agent.speed; // 记录初始移动速度
+        guardPosition = transform.position; // 记录守卫初始位置
+        guardRotation = transform.rotation; // 记录守卫初始朝向
+        remainLookAtTime = lookAtTime; // 初始化观察时间
     }
 
+    // 开始时设置敌人状态
     private void Start()
     {
-        if (isGuard)
+        enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL; // 初始化状态
+        if (!isGuard)
         {
-            enemyState = EnemyState.GUARD; // 如果是守卫模式，初始化状态为守卫
-        }
-        else
-        {
-            enemyState = EnemyState.PARTOL; // 否则初始化为巡逻
-            GetNewWayPoint(); // 获取新的巡逻点
+            GetNewPatrolPoint(); // 获取巡逻点
         }
 
         // FIXME: 场景切换后可能需要重新注册观察者，这里需要优化
         GameManager.Instance.AddObserver(this);
     }
 
+    // 对象禁用时移除观察者
     private void OnDisable()
     {
-        // 当对象被禁用时，移除观察者
         if (!GameManager.IsInitialized) return;
         GameManager.Instance.RemoveObserver(this);
     }
 
     private void Update()
     {
-        isDead = characterStats.CurrentHealth == 0; // 判断敌人是否死亡
+        isDead = enemyStats.CurrentHealth == 0; // 判断敌人是否死亡
 
         if (!playerDead)
         {
-            SwitchState(); // 切换敌人的状态
-            lastAttackTime -= Time.deltaTime; // 更新攻击冷却时间
+            UpdateState(); // 切换敌人的状态
+            lastAttackTime -= Time.deltaTime; // 更新攻击冷却
         }
 
-        SwitchAnimation(); // 更新动画状态
+        UpdateAnimation(); // 更新动画状态
     }
 
-    private void SwitchAnimation()
+    private void UpdateAnimation()
     {
         // 设置动画参数，控制敌人动画
         animator.SetBool("Walk", isWalking);
@@ -93,53 +94,84 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
     }
 
     /// <summary>
-    /// 根据当前的敌人状态，执行对应的逻辑
+    /// 根据敌人状态执行对应的逻辑
     /// </summary>
-    private void SwitchState()
+    private void UpdateState()
     {
         if (isDead)
-        {
-            enemyState = EnemyState.DEAD; // 如果敌人死亡，切换到死亡状态
+        {   // 如果敌人死亡，切换到死亡状态
+            enemyState = EnemyState.DEAD;
         }
-        else if (FoundPlayer())
+        else if (PlayerDetected())
         {
-            enemyState = EnemyState.CHASE; // 如果发现玩家，切换到追击状态
+            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE) // 发现玩家后进入警觉状态
+            {
+                Debug.Log(this.name + "发现玩家");
+                transform.LookAt(attackTarget.transform);
+
+                enemyState = EnemyState.ALERT;
+                alertTimer = alertTime; // 重置警觉计时器
+            }
+        }
+        else if (enemyState == EnemyState.ALERT)
+        {
+            // 如果玩家脱离视野范围，恢复到默认状态
+            enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
         }
 
         switch (enemyState)
         {
             case EnemyState.GUARD:
-                HandleGuardState();
+                ExecuteGuardBehavior();
                 break;
-            case EnemyState.PARTOL:
-                HandlePartolState();
+            case EnemyState.PATROL:
+                ExecutePatrolBehavior();
+                break;
+            case EnemyState.ALERT:
+                ExecuteAlertBehavior();
                 break;
             case EnemyState.CHASE:
-                HandleChaseState();
+                ExecuteChaseBehavior();
                 break;
             case EnemyState.DEAD:
-                HandleDeadState();
+                ExecuteDeadBehavior();
                 break;
             default:
                 break;
         }
     }
-
-    /// <summary>
-    /// 处理守卫状态的逻辑
-    /// </summary>
-    private void HandleGuardState()
+    private void ExecuteAlertBehavior()
     {
         isChasing = false;
 
-        if (transform.position != guardPos)
+        // 警觉时间倒计时
+        alertTimer -= Time.deltaTime;
+        if (alertTimer <= 0)
+        {
+            enemyState = EnemyState.CHASE; // 警觉时间结束，切换到追击状态
+        }
+        else
+        {
+            // 警觉状态下可以选择继续原地等待或缓慢靠近玩家
+            agent.destination = transform.position; // 保持当前站位
+        }
+    }
+
+    /// <summary>
+    /// 守卫状态的逻辑
+    /// </summary>
+    private void ExecuteGuardBehavior()
+    {
+        isChasing = false;
+
+        if (transform.position != guardPosition)
         {
             isWalking = true;
             agent.isStopped = false;
-            agent.destination = guardPos;
+            agent.destination = guardPosition;
 
             // 如果回到守卫位置，停止移动并恢复初始朝向
-            if (Vector3.SqrMagnitude(guardPos - transform.position) <= agent.stoppingDistance)
+            if (Vector3.SqrMagnitude(guardPosition - transform.position) <= agent.stoppingDistance)
             {
                 isWalking = false;
                 transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
@@ -148,41 +180,41 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
     }
 
     /// <summary>
-    /// 处理巡逻状态的逻辑
+    /// 巡逻状态的逻辑
     /// </summary>
-    private void HandlePartolState()
+    private void ExecutePatrolBehavior()
     {
         isChasing = false;
-        agent.speed = speed * 0.5f; // 巡逻时减慢速度
+        agent.speed = movementSpeed * 0.5f; // 巡逻时减慢速度
 
         // 判断是否到达巡逻点
-        if (Vector3.Distance(wayPoint, transform.position) <= agent.stoppingDistance)
+        if (Vector3.Distance(patrolPoint, transform.position) <= agent.stoppingDistance)
         {
             isWalking = false;
             if (remainLookAtTime > 0)
                 remainLookAtTime -= Time.deltaTime; // 停留一段时间后再移动到下一个巡逻点
             else
             {
-                GetNewWayPoint();
+                GetNewPatrolPoint();
                 remainLookAtTime = lookAtTime;
             }
         }
         else
         {
             isWalking = true;
-            agent.destination = wayPoint;
+            agent.destination = patrolPoint;
         }
     }
 
     /// <summary>
-    /// 处理追击状态的逻辑
+    /// 追击时，根据距离触发攻击或者技能
     /// </summary>
-    private void HandleChaseState()
+    private void ExecuteChaseBehavior()
     {
         isWalking = false;
         isChasing = true;
 
-        if (!FoundPlayer())
+        if (!PlayerDetected())
         {
             isFollow = false;
             if (remainLookAtTime > 0)
@@ -193,99 +225,82 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
             else if (isGuard)
                 enemyState = EnemyState.GUARD;
             else
-                enemyState = EnemyState.PARTOL;
+                enemyState = EnemyState.PATROL;
         }
         else
-        {
+        {   // 给怪物一个反应时间
             isFollow = true;
             agent.isStopped = false;
             agent.destination = attackTarget.transform.position;
 
-            if (TargetInAttackRange() || TargetInSkillRange())
+            if (WithinAttackRange() || WithinSkillRange())
             {
                 isFollow = false;
                 agent.isStopped = true;
-
                 if (lastAttackTime < 0)
-                {
-                    lastAttackTime = characterStats.attackData.coolDown;
-                    Attack(); // 执行攻击逻辑
+                {   // 可以攻击
+                    lastAttackTime = enemyStats.attackData.coolDown;
+                    PerformAttack(); // 执行攻击逻辑
                 }
             }
         }
     }
 
     /// <summary>
-    /// 处理敌人死亡的逻辑
+    /// 执行敌人死亡的逻辑
     /// </summary>
-    private void HandleDeadState()
+    private void ExecuteDeadBehavior()
     {
-        // 停止敌人的移动和交互
         agent.radius = 0;
         coll.enabled = false;
         Destroy(gameObject, 2f); // 2秒后销毁敌人对象
     }
 
     /// <summary>
-    /// 执行敌人的攻击逻辑
+    /// 执行敌人攻击
     /// </summary>
-    void Attack()
+    void PerformAttack()
     {
         // 判断是否触发暴击
-        characterStats.isCritical = Random.value < characterStats.attackData.criticalChance;
+        enemyStats.isCritical = Random.value < enemyStats.attackData.criticalChance;
 
         // 面向攻击目标
         transform.LookAt(attackTarget.transform);
 
-        if (TargetInAttackRange())
+        if (WithinAttackRange())
         {
-            animator.SetTrigger("Attack"); // 播放近战攻击动画
+            animator.SetTrigger("Attack"); // 播放攻击动画
         }
 
-        if (TargetInSkillRange())
+        if (WithinSkillRange())
         {
-            animator.SetTrigger("Skill"); // 播放技能攻击动画
+            animator.SetTrigger("Skill"); // 播放技能动画
         }
     }
 
     /// <summary>
     /// 判断目标是否在近战攻击范围内
     /// </summary>
-    /// <returns>如果在攻击范围内返回 true，否则返回 false</returns>
-    bool TargetInAttackRange()
+    private bool WithinAttackRange()
     {
-        if (attackTarget != null)
-        {
-            return Vector3.Distance(attackTarget.transform.position, transform.position) <= characterStats.attackData.attackRange;
-        }
-        else
-        {
-            return false;
-        }
+        return attackTarget != null &&
+            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.attackRange;
     }
 
     /// <summary>
     /// 判断目标是否在技能攻击范围内
     /// </summary>
-    /// <returns>如果在技能范围内返回 true，否则返回 false</returns>
-    bool TargetInSkillRange()
+    private bool WithinSkillRange()
     {
-        if (attackTarget != null)
-        {
-            return Vector3.Distance(attackTarget.transform.position, transform.position) <= characterStats.attackData.skillRange &&
-                   Vector3.Distance(attackTarget.transform.position, transform.position) > characterStats.attackData.attackRange;
-        }
-        else
-        {
-            return false;
-        }
+        return attackTarget != null &&
+            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.skillRange &&
+            Vector3.Distance(attackTarget.transform.position, transform.position) > enemyStats.attackData.attackRange;
     }
 
     /// <summary>
-    /// 在视野范围内寻找玩家的位置
+    /// 判断是否在视野范围内发现玩家
     /// </summary>
-    /// <returns>如果找到玩家返回 true，否则返回 false</returns>
-    bool FoundPlayer()
+    private bool PlayerDetected()
     {
         var colliders = Physics.OverlapSphere(transform.position, sightRadius);
 
@@ -304,48 +319,41 @@ public class EnemyController : MonoBehaviour,IEndGameObserver
     /// <summary>
     /// 获取新的巡逻点
     /// </summary>
-    void GetNewWayPoint()
+    void GetNewPatrolPoint()
     {
-        Vector3 randomPoint = new Vector3(
-            Random.Range(-partolRange, partolRange),
-            0,
-            Random.Range(-partolRange, partolRange)
-        );
-
+        Vector3 randomPoint = new Vector3(Random.Range(-patrolRange, patrolRange), 0, Random.Range(-patrolRange, patrolRange));
         NavMeshHit hit;
-        wayPoint = guardPos + randomPoint;
+        patrolPoint = guardPosition + randomPoint;
 
         // 确保巡逻点在导航网格上
-        if (NavMesh.SamplePosition(wayPoint, out hit, partolRange, 1))
+        if (NavMesh.SamplePosition(patrolPoint, out hit, patrolRange, 1))
         {
-            wayPoint = hit.position;
+            patrolPoint = hit.position;
         }
         else
         {
-            wayPoint = guardPos;
+            patrolPoint = guardPosition;
         }
     }
 
     /// <summary>
-    /// 动画中调用该事件
+    /// 动画中调用该事件,触发特效或者音效
     /// </summary>
     private void Hit()
     {
-        if(attackTarget != null&&transform.IsFacingTarget(attackTarget.transform))
+        // 攻击的时候要判断玩家是否在攻击范围内
+        if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform))
         {
             var targetStats = attackTarget.GetComponent<CharacterStats>();
-
-            targetStats.TakeDamage(characterStats, targetStats);
+            targetStats.TakeDamage(enemyStats, targetStats); // 执行伤害
         }
-        
     }
 
     /// <summary>
-    /// 用于场景切换时的清理工作
+    /// 当场景切换时调用，重置状态
     /// </summary>
     public void EndNotify()
     {
-        // 场景切换时清除目标，重置敌人状态
         animator.SetBool("Win", true);
         playerDead = true;
         isChasing = false;

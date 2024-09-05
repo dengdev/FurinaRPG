@@ -1,7 +1,7 @@
 
 public enum EnemyState
 {
-    GUARD, PARTOL, CHASE,DEAD
+    GUARD, PATROL, CHASE, DEAD, ALERT
 }
 
 /// <summary>

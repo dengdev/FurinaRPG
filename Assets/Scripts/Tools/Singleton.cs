@@ -4,10 +4,8 @@ using UnityEngine;
 
 
 /// <summary>
-/// 注：这是常用的工具类型
-/// 为所有的Manager，方便提供一个泛型的单例模式
+/// 为所有的Manager提供一个泛型的单例模式
 /// </summary>
-/// <typeparam name="T"></typeparam>
 public class Singleton<T> : MonoBehaviour where T : Singleton<T>
 {
     private static T instance;

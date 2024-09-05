@@ -10,6 +10,10 @@ public class GameManager : Singleton<GameManager>
     
     List<IEndGameObserver> endGameObservers=new List<IEndGameObserver>();
 
+    /// <summary>
+    /// ×¢²áÍæ¼Ò
+    /// </summary>
+    /// <param name="player"></param>
     public void RegisterPlayer(CharacterStats player)
     {
         playerStats = player;

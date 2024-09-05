@@ -3,35 +3,58 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// 玩家的血量和经验值UI
+/// </summary>
 public class PlayerHealthUI : MonoBehaviour
 {
-    Text leveltext;
-    Image healthSlider;
-    Image expSlider;
+    [SerializeField] private Text levelText; // 等级文本
+    [SerializeField] private Text healthText; // 血量文本
+    [SerializeField] private Image healthSlider; // 血量条
+    [SerializeField] private Image expSlider; // 经验条
+
     private void Awake()
     {
-        leveltext=transform.GetChild(2).GetComponent<Text>();
+        // 初始化组件
         healthSlider=transform.GetChild(0).GetChild(0).GetComponent<Image>();
         expSlider = transform.GetChild(1).GetChild(0).GetComponent<Image>();
+        levelText = transform.GetChild(2).GetComponent<Text>();
+        healthText = transform.GetChild(3).GetComponent<Text>();
+    }
 
+    private void Start()
+    {
+        // 初始化显示
+        //UpdateLevel();
+        //UpdateHealth();
+        //UpdateExp();
     }
 
     private void Update()
     {
-        leveltext.text = "等级：" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
-        UpDateHealth();
-        UpDateExp();
+        // 假设这些值会频繁变化，才需要每帧更新
+        UpdateLevel();
+        UpdateHealth();
+        UpdateExp();
     }
 
-
-    private void UpDateHealth()
+    private void UpdateLevel()
     {
-        float sliderPercent=(float)GameManager.Instance.playerStats.CurrentHealth/GameManager.Instance.playerStats.MaxHealth;
-        healthSlider.fillAmount=sliderPercent;
+        // 更新等级显示
+        levelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
     }
 
-    private void UpDateExp()
+    private void UpdateHealth()
     {
+        // 更新血量条和文本显示
+        float sliderPercent = (float)GameManager.Instance.playerStats.CurrentHealth / GameManager.Instance.playerStats.MaxHealth;
+        healthSlider.fillAmount = sliderPercent;
+        healthText.text = $"{GameManager.Instance.playerStats.CurrentHealth} / {GameManager.Instance.playerStats.MaxHealth}";
+    }
+
+    private void UpdateExp()
+    {
+        // 更新经验条显示
         float sliderPercent = (float)GameManager.Instance.playerStats.characterData.currentExp  / GameManager.Instance.playerStats.characterData.baseExp ;
         expSlider.fillAmount = sliderPercent;
     }

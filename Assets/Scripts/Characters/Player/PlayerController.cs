@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using UnityEngine;
 
+/// <summary>
+/// 处理角色控制
+/// </summary>
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -265,12 +268,14 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     private bool FoundEnemy()
     {
-        var colliders = Physics.OverlapSphere(transform.position, attackRange);
+        var colliders = Physics.OverlapSphere(transform.position, attackRange+2);
         foreach (var target in colliders)
         {
-            if (target.CompareTag("Enemy") || target.CompareTag("Attackable"))
+            // 不使用此方式找敌人
+            if (target.CompareTag("Attackable"))
             {
                 attackTarget = target.gameObject;
+                Debug.Log($"找到攻击目标: {attackTarget.name}");
                 return true;
             }
         }

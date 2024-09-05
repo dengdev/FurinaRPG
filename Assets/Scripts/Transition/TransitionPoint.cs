@@ -18,6 +18,7 @@ public class TransitionPoint : MonoBehaviour
     {
         if(other.CompareTag("Player"))
             canTrans = true;
+        Debug.Log(canTrans);
 
     }
 
@@ -25,6 +26,8 @@ public class TransitionPoint : MonoBehaviour
     {
         if (other.CompareTag("Player"))
             canTrans = false;
+        Debug.Log(canTrans);
+
     }
 
 }
