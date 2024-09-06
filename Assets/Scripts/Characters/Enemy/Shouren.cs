@@ -8,11 +8,13 @@ public class Shouren : EnemyController
     public float kickBackForce = 20;
     private Vector3 knockbackDirection;
 
+    /// <summary>
+    /// 动画中调用，后期要改
+    /// </summary>
     public void KickOff()
     {
         if(attackTarget != null && transform.IsFacingTarget(attackTarget.transform))
         {
-            transform.LookAt(attackTarget.transform);
             {
                 knockbackDirection = (attackTarget.transform.position - transform.position).normalized;
                 attackTarget.GetComponent<PlayerController>().Knockback(knockbackDirection* kickBackForce);

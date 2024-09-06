@@ -45,11 +45,9 @@ public class Weapon : MonoBehaviour
         // 检查是否与敌人碰撞
         if (other.CompareTag("Enemy"))
         {
-            Debug.Log("碰到敌人了");
             CharacterStats enemyStats = other.GetComponent<CharacterStats>();
             if (enemyStats != null)
             {
-                Debug.Log("打出伤害");
                 // 计算并应用伤害
                 enemyStats.TakeDamage(playerStats, enemyStats);
             }

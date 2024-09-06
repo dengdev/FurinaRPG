@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Stoneren : EnemyController
 {
-    [Header("Skill")]
+    [Header("石头人技能设置")]
     public float kickBackForce = 60;
-    private Vector3 knockbackDirection;
+    private Vector3 knockbackDirection; // 击退方向
 
     public GameObject rockPrefab;
     public Transform handPos;
@@ -18,14 +18,14 @@ public class Stoneren : EnemyController
     {
         if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform))
         {
-            transform.LookAt(attackTarget.transform);
+            var targetStats = attackTarget.GetComponent<CharacterStats>();
             {
                 knockbackDirection = (attackTarget.transform.position - transform.position).normalized;
                 attackTarget.GetComponent<PlayerController>().Knockback(knockbackDirection * kickBackForce);
 
-                attackTarget.GetComponent<Animator>().SetTrigger("Dizzy");
-                Debug.Log("角色被眩晕且击退");
-
+                //attackTarget.GetComponent<Animator>().SetTrigger("Dizzy");
+                //Debug.Log("角色被眩晕且击退");
+                targetStats.TakeDamage(enemyStats, targetStats);
             }
         }
     }
@@ -35,10 +35,10 @@ public class Stoneren : EnemyController
     /// </summary>
     public void Throwrock()
     {
-        if (attackTarget != null)
-        {
-            var rock=Instantiate(rockPrefab,handPos.position,Quaternion.identity);
-            rock.GetComponent<Rock>().target= attackTarget;
-        }
+        // 即使玩家脱离范围，也生成最后一块石头，避免动画不流畅
+        var rock = Instantiate(rockPrefab, handPos.position, Quaternion.identity);
+        rock.GetComponent<Rigidbody>().velocity = transform.forward;
+        rock.GetComponent<Rock>().target = attackTarget;
+
     }
 }

@@ -74,7 +74,7 @@ public class CharacterStats : MonoBehaviour
         if (isCritical)
         {
             baseDamage = (int)(baseDamage * attackData.criticalMultiplier);
-            Debug.Log($"{name} 触发暴击");
+            Debug.Log($"{attacker.name} 触发暴击");
         }
 
         // 3. 应用最终伤害
@@ -88,7 +88,7 @@ public class CharacterStats : MonoBehaviour
     }
 
     /// <summary>
-    /// 处理非直接攻击伤害（如石头等）
+    /// 方法重载，处理非直接攻击伤害（如石头等）
     /// </summary>
     public void TakeDamage(int damage, CharacterStats defender)
     {
@@ -113,11 +113,10 @@ public class CharacterStats : MonoBehaviour
     }
 
     /// <summary>
-    /// 攻击-防御之后的伤害
+    /// 攻击-防御之后的伤害，最小为1
     /// </summary>
     private int CalculateDamage(int damage, int defence)
     {
-        // 确保伤害最小为1
         return Mathf.Max(damage - defence, 1);
     }
 

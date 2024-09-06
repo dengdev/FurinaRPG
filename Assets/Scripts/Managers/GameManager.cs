@@ -7,8 +7,7 @@ public class GameManager : Singleton<GameManager>
 {
     public CharacterStats playerStats;
 
-    
-    List<IEndGameObserver> endGameObservers=new List<IEndGameObserver>();
+    List<IEndGameObserver> endGameObservers = new List<IEndGameObserver>();
 
     /// <summary>
     /// 注册玩家
@@ -19,7 +18,6 @@ public class GameManager : Singleton<GameManager>
         playerStats = player;
     }
 
-
     public void AddObserver(IEndGameObserver observer)
     {
         endGameObservers.Add(observer);
@@ -29,7 +27,10 @@ public class GameManager : Singleton<GameManager>
     {
         endGameObservers.Remove(observer);
     }
-   
+
+    /// <summary>
+    /// 观察者广播
+    /// </summary>
     public void NotifyObservers()
     {
         foreach (var observer in endGameObservers)
@@ -39,6 +40,6 @@ public class GameManager : Singleton<GameManager>
     }
 
 
-   
+
 
 }

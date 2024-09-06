@@ -54,12 +54,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CellDensity: 15.57
-    - _Power: 22.7
+    - _CellDensity: 12
+    - _Power: 100
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Speed: 1.99
-    - _Strength: 9.25
+    - _Speed: 0.8
+    - _Strength: 8
     m_Colors:
     - _Color: {r: 0.23619461, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []

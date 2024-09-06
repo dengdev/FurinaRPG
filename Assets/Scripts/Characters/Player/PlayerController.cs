@@ -29,10 +29,9 @@ public class PlayerController : MonoBehaviour
     private GameObject interactableObject; // 当前可交互的物品
 
     private Vector3 moveDirection = Vector3.zero; // 角色移动方向
-    private float knockbackTimer;
+    private float knockbackTimer; // 击退的时间
     private float jumpVelocity;
 
-    private Vector3 knockbackDirection;
     public float currentMoveSpeed;
 
     private Transform cameraTransform; // 相机的Transform
@@ -62,7 +61,6 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-
         if (playerStats.CurrentHealth == 0)
         {
             GameManager.Instance.NotifyObservers(); // 角色死亡进行广播
@@ -71,7 +69,9 @@ public class PlayerController : MonoBehaviour
         if (knockbackTimer > 0)
         {
             knockbackTimer -= Time.deltaTime;
-            moveDirection = Vector3.zero;
+            characterController.Move(moveDirection * Time.deltaTime); // 根据击退方向进行移动
+            moveDirection = Vector3.Lerp(moveDirection, Vector3.zero, Time.deltaTime * 5f); // 减缓击退效果，逐渐停下来
+
         }
         else
         {
@@ -121,10 +121,11 @@ public class PlayerController : MonoBehaviour
     /// 实现被击退的逻辑
     /// </summary>
     /// <param name="knockbackDirection"></param>
-    public void Knockback(Vector3 knockbackDirection)
+    public void Knockback(Vector3 knockbackForce)
     {
-        this.knockbackDirection = knockbackDirection;
+        // 应用击退的方向和力度
         knockbackTimer = knockbackDuration;
+        moveDirection = knockbackForce; // 设置击退方向
     }
 
     /// <summary>
@@ -133,8 +134,8 @@ public class PlayerController : MonoBehaviour
     /// <returns></returns>
     private IEnumerator Attack()
     {
-        //角色面朝攻击对象
-        if(attackTarget!=null) transform.LookAt(attackTarget.transform.position);
+        // 不需要角色自动面朝攻击对象
+        //if(attackTarget!=null) transform.LookAt(attackTarget.transform.position);
 
         isAttacking = true; // 开始攻击逻辑
         playerStats.isCritical = UnityEngine.Random.value < playerStats.attackData.criticalChance; // 暴击判断
@@ -240,18 +241,17 @@ public class PlayerController : MonoBehaviour
     /// 动画事件，动画中调用
     /// </summary>
     private void Hit()
-    {
+    { // 击飞岩石
         if (attackTarget != null)
         {
-            // 攻击石头
             if (attackTarget.CompareTag("Attackable"))
             {
                 Rock rock = attackTarget.GetComponent<Rock>();
                 if (rock != null)
                 {
-                    rock.rockState = Rock.RockStates.HitEnemy;
+                    rock.rockState = Rock.RockStates.HitEnemy; // 设置岩石为攻击敌人
                     Rigidbody rb = attackTarget.GetComponent<Rigidbody>();
-                    rb.velocity = Vector3.one;
+                    rb.velocity = Vector3.one; // 击飞的初始速度
                     rb.AddForce(transform.forward * 20, ForceMode.Impulse);
                 }
             }

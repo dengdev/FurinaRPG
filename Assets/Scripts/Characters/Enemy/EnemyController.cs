@@ -30,7 +30,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     private Quaternion guardRotation; // 守卫模式下敌人的初始朝向
 
     [Header("Alert Settings")]
-    public float alertTime = 2f; // 警觉时间
+    public float alertTime = 1.2f; // 警觉时间
     private float alertTimer; // 当前的警觉计时器
 
     // 控制动画状态的布尔值
@@ -62,6 +62,12 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
 
         // FIXME: 场景切换后可能需要重新注册观察者，这里需要优化
         GameManager.Instance.AddObserver(this);
+    }
+
+    // 切换场景时启用
+    private void OnEnable()
+    {
+        //GameManager.Instance.AddObserver(this);
     }
 
     // 对象禁用时移除观察者
@@ -107,8 +113,6 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
             if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE) // 发现玩家后进入警觉状态
             {
                 Debug.Log(this.name + "发现玩家");
-                transform.LookAt(attackTarget.transform);
-
                 enemyState = EnemyState.ALERT;
                 alertTimer = alertTime; // 重置警觉计时器
             }
@@ -153,7 +157,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
         else
         {
             // 警觉状态下可以选择继续原地等待或缓慢靠近玩家
-            agent.destination = transform.position; // 保持当前站位
+            //agent.destination = transform.position; // 保持当前站位
         }
     }
 
@@ -251,6 +255,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// </summary>
     private void ExecuteDeadBehavior()
     {
+        // 死亡后不会挡路
         agent.radius = 0;
         coll.enabled = false;
         Destroy(gameObject, 2f); // 2秒后销毁敌人对象
@@ -350,7 +355,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     }
 
     /// <summary>
-    /// 当场景切换时调用，重置状态
+    /// 玩家死亡之后的逻辑 
     /// </summary>
     public void EndNotify()
     {
