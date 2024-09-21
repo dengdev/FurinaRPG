@@ -6,8 +6,7 @@ using UnityEngine.AI;
 // 确保该组件附加在具有 NavMeshAgent 和 CharacterStats 组件的对象上
 [RequireComponent(typeof(NavMeshAgent), typeof(CharacterStats))]
 
-public class EnemyController : MonoBehaviour, IEndGameObserver
-{
+public class EnemyController : MonoBehaviour, IGameOverObserver {
     private EnemyState enemyState; // 敌人的当前状态 (巡逻、追击、守卫等)
     private NavMeshAgent agent; // 用于路径导航的组件
     private Animator animator; // 控制敌人动画的组件
@@ -38,8 +37,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     bool playerDead; // 玩家是否死亡
 
     // 初始化组件和变量
-    void Awake()
-    {
+    void Awake() {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         coll = GetComponent<Collider>();
@@ -52,11 +50,9 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     }
 
     // 开始时设置敌人状态
-    private void Start()
-    {
+    private void Start() {
         enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL; // 初始化状态
-        if (!isGuard)
-        {
+        if (!isGuard) {
             GetNewPatrolPoint(); // 获取巡逻点
         }
 
@@ -65,66 +61,50 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     }
 
     // 切换场景时启用
-    private void OnEnable()
-    {
+    private void OnEnable() {
         //GameManager.Instance.AddObserver(this);
     }
 
     // 对象禁用时移除观察者
-    private void OnDisable()
-    {
+    private void OnDisable() {
         if (!GameManager.IsInitialized) return;
         GameManager.Instance.RemoveObserver(this);
     }
 
-    private void Update()
-    {
+    private void Update() {
         isDead = enemyStats.CurrentHealth == 0; // 判断敌人是否死亡
 
-        if (!playerDead)
-        {
-            UpdateState(); // 切换敌人的状态
+        if (!playerDead) {
+            UpdateEnemyState(); // 切换敌人的状态
             lastAttackTime -= Time.deltaTime; // 更新攻击冷却
         }
 
-        UpdateAnimation(); // 更新动画状态
+        UpdateEnemyAnimation(); // 更新动画状态
     }
 
-    private void UpdateAnimation()
-    {
-        // 设置动画参数，控制敌人动画
+    private void UpdateEnemyAnimation() {
         animator.SetBool("Walk", isWalking);
         animator.SetBool("Chase", isChasing);
         animator.SetBool("Follow", isFollow);
         animator.SetBool("Death", isDead);
     }
 
-    /// <summary>
-    /// 根据敌人状态执行对应的逻辑
-    /// </summary>
-    private void UpdateState()
-    {
-        if (isDead)
-        {   // 如果敌人死亡，切换到死亡状态
+    private void UpdateEnemyState() {
+        if (isDead) {
             enemyState = EnemyState.DEAD;
-        }
-        else if (PlayerDetected())
-        {
-            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE) // 发现玩家后进入警觉状态
+        } else if (PlayerDetected()) {
+            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE)
             {
                 Debug.Log(this.name + "发现玩家");
                 enemyState = EnemyState.ALERT;
                 alertTimer = alertTime; // 重置警觉计时器
             }
-        }
-        else if (enemyState == EnemyState.ALERT)
-        {
+        } else if (enemyState == EnemyState.ALERT) {
             // 如果玩家脱离视野范围，恢复到默认状态
             enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
         }
 
-        switch (enemyState)
-        {
+        switch (enemyState) {
             case EnemyState.GUARD:
                 ExecuteGuardBehavior();
                 break;
@@ -138,123 +118,90 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
                 ExecuteChaseBehavior();
                 break;
             case EnemyState.DEAD:
-                ExecuteDeadBehavior();
+                ExecuteEnemyDeadBehavior();
                 break;
             default:
                 break;
         }
     }
-    private void ExecuteAlertBehavior()
-    {
+    private void ExecuteAlertBehavior() {
         isChasing = false;
 
         // 警觉时间倒计时
         alertTimer -= Time.deltaTime;
-        if (alertTimer <= 0)
-        {
+        if (alertTimer <= 0) {
             enemyState = EnemyState.CHASE; // 警觉时间结束，切换到追击状态
-        }
-        else
-        {
+        } else {
             // 警觉状态下可以选择继续原地等待或缓慢靠近玩家
             //agent.destination = transform.position; // 保持当前站位
         }
     }
 
-    /// <summary>
-    /// 守卫状态的逻辑
-    /// </summary>
-    private void ExecuteGuardBehavior()
-    {
+    private void ExecuteGuardBehavior() {
         isChasing = false;
 
-        if (transform.position != guardPosition)
-        {
+        if (transform.position != guardPosition) {
             isWalking = true;
             agent.isStopped = false;
             agent.destination = guardPosition;
 
             // 如果回到守卫位置，停止移动并恢复初始朝向
-            if (Vector3.SqrMagnitude(guardPosition - transform.position) <= agent.stoppingDistance)
-            {
+            if (Vector3.SqrMagnitude(guardPosition - transform.position) <= agent.stoppingDistance) {
                 isWalking = false;
                 transform.rotation = Quaternion.Lerp(transform.rotation, guardRotation, 0.01f);
             }
         }
     }
 
-    /// <summary>
-    /// 巡逻状态的逻辑
-    /// </summary>
-    private void ExecutePatrolBehavior()
-    {
+    private void ExecutePatrolBehavior() {
         isChasing = false;
         agent.speed = movementSpeed * 0.5f; // 巡逻时减慢速度
 
         // 判断是否到达巡逻点
-        if (Vector3.Distance(patrolPoint, transform.position) <= agent.stoppingDistance)
-        {
+        if (Vector3.Distance(patrolPoint, transform.position) <= agent.stoppingDistance) {
             isWalking = false;
             if (remainLookAtTime > 0)
                 remainLookAtTime -= Time.deltaTime; // 停留一段时间后再移动到下一个巡逻点
-            else
-            {
+            else {
                 GetNewPatrolPoint();
                 remainLookAtTime = lookAtTime;
             }
-        }
-        else
-        {
+        } else {
             isWalking = true;
             agent.destination = patrolPoint;
         }
     }
 
-    /// <summary>
-    /// 追击时，根据距离触发攻击或者技能
-    /// </summary>
-    private void ExecuteChaseBehavior()
-    {
+    private void ExecuteChaseBehavior() {
         isWalking = false;
         isChasing = true;
 
-        if (!PlayerDetected())
-        {
+        if (!PlayerDetected()) {
             isFollow = false;
-            if (remainLookAtTime > 0)
-            {
+            if (remainLookAtTime > 0) {
                 agent.destination = transform.position;
                 remainLookAtTime -= Time.deltaTime;
-            }
-            else if (isGuard)
+            } else if (isGuard)
                 enemyState = EnemyState.GUARD;
             else
                 enemyState = EnemyState.PATROL;
-        }
-        else
-        {   // 给怪物一个反应时间
+        } else {   // 给怪物一个反应时间
             isFollow = true;
             agent.isStopped = false;
             agent.destination = attackTarget.transform.position;
 
-            if (WithinAttackRange() || WithinSkillRange())
-            {
+            if (WithinAttackRange() || WithinSkillRange()) {
                 isFollow = false;
                 agent.isStopped = true;
-                if (lastAttackTime < 0)
-                {   // 可以攻击
+                if (lastAttackTime < 0) {   
                     lastAttackTime = enemyStats.attackData.coolDown;
-                    PerformAttack(); // 执行攻击逻辑
+                    PerformEnemyAttack(); // 执行攻击逻辑
                 }
             }
         }
     }
 
-    /// <summary>
-    /// 执行敌人死亡的逻辑
-    /// </summary>
-    private void ExecuteDeadBehavior()
-    {
+    private void ExecuteEnemyDeadBehavior() {
         // 死亡后不会挡路
         agent.radius = 0;
         coll.enabled = false;
@@ -264,21 +211,18 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 执行敌人攻击
     /// </summary>
-    void PerformAttack()
-    {
+    void PerformEnemyAttack() {
         // 判断是否触发暴击
         enemyStats.isCritical = Random.value < enemyStats.attackData.criticalChance;
 
         // 面向攻击目标
         transform.LookAt(attackTarget.transform);
 
-        if (WithinAttackRange())
-        {
+        if (WithinAttackRange()) {
             animator.SetTrigger("Attack"); // 播放攻击动画
         }
 
-        if (WithinSkillRange())
-        {
+        if (WithinSkillRange()) {
             animator.SetTrigger("Skill"); // 播放技能动画
         }
     }
@@ -286,8 +230,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 判断目标是否在近战攻击范围内
     /// </summary>
-    private bool WithinAttackRange()
-    {
+    private bool WithinAttackRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.attackRange;
     }
@@ -295,8 +238,7 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 判断目标是否在技能攻击范围内
     /// </summary>
-    private bool WithinSkillRange()
-    {
+    private bool WithinSkillRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.skillRange &&
             Vector3.Distance(attackTarget.transform.position, transform.position) > enemyStats.attackData.attackRange;
@@ -305,14 +247,11 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 判断是否在视野范围内发现玩家
     /// </summary>
-    private bool PlayerDetected()
-    {
+    private bool PlayerDetected() {
         var colliders = Physics.OverlapSphere(transform.position, sightRadius);
 
-        foreach (var target in colliders)
-        {
-            if (target.CompareTag("Player"))
-            {
+        foreach (var target in colliders) {
+            if (target.CompareTag("Player")) {
                 attackTarget = target.gameObject;
                 return true;
             }
@@ -324,19 +263,15 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 获取新的巡逻点
     /// </summary>
-    void GetNewPatrolPoint()
-    {
+    void GetNewPatrolPoint() {
         Vector3 randomPoint = new Vector3(Random.Range(-patrolRange, patrolRange), 0, Random.Range(-patrolRange, patrolRange));
         NavMeshHit hit;
         patrolPoint = guardPosition + randomPoint;
 
         // 确保巡逻点在导航网格上
-        if (NavMesh.SamplePosition(patrolPoint, out hit, patrolRange, 1))
-        {
+        if (NavMesh.SamplePosition(patrolPoint, out hit, patrolRange, 1)) {
             patrolPoint = hit.position;
-        }
-        else
-        {
+        } else {
             patrolPoint = guardPosition;
         }
     }
@@ -344,21 +279,18 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 动画中调用该事件,触发特效或者音效
     /// </summary>
-    private void Hit()
-    {
+    private void Hit() {
         // 攻击的时候要判断玩家是否在攻击范围内
-        if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform))
-        {
+        if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
             var targetStats = attackTarget.GetComponent<CharacterStats>();
-            targetStats.TakeDamage(enemyStats, targetStats); // 执行伤害
+            targetStats.TakeCharacterDamage(enemyStats, targetStats); // 执行伤害
         }
     }
 
     /// <summary>
     /// 玩家死亡之后的逻辑 
     /// </summary>
-    public void EndNotify()
-    {
+    public void PlayerDeadNotify() {
         animator.SetBool("Win", true);
         playerDead = true;
         isChasing = false;
@@ -369,9 +301,10 @@ public class EnemyController : MonoBehaviour, IEndGameObserver
     /// <summary>
     /// 绘制调试辅助信息
     /// </summary>
-    private void OnDrawGizmosSelected()
-    {
+    private void OnDrawGizmosSelected() {
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, sightRadius);
+        Gizmos.DrawWireSphere(transform.position, patrolRange);
+
     }
 }

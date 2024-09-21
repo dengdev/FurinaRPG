@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// 玩家的血量和经验值UI
-/// </summary>
 public class PlayerHealthUI : MonoBehaviour
 {
     [SerializeField] private Text levelText; // 等级文本

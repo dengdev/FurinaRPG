@@ -4,39 +4,33 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class TransitionPoint : MonoBehaviour
-{
-    /// <summary>
-    /// 同或不同场景类型
-    /// </summary>
-    public enum TransionType { SameScene, DifferentScene }
+public class TransitionPoint : MonoBehaviour {
+    public enum TransitionType { SameScene, DifferentScene }
 
     [Header("Transition Info")]
-    public string sceneName;// 目标场景名
-    public TransionType transionType; // 传送类型
-    public TransitionDestination.DestionationTag destionationTag; // 目的地标记
-    private bool canTrans;
+    public string destinationSceneName;
+    public TransitionType transitionType;
+    public TransitionDestination.DestinationTag destinationTag;
+    private bool playerCanTransition;
 
-    private void OnTriggerStay(Collider other)
-    {
-        if(other.CompareTag("Player"))
-            canTrans = true;
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player"))
-            canTrans = false;
-    }
-
-    private void Update()
-    {
-        // 检测按键T，如果玩家在碰撞体内并且按下了T
-        if (canTrans && Input.GetKeyDown(KeyCode.T))
-        {
-            Debug.Log("可以传送");
-           
+    private void OnTriggerStay(Collider other) {
+        if (other.CompareTag("Player")) {
+            playerCanTransition = true;
         }
     }
 
+    private void OnTriggerExit(Collider other) {
+        if (other.CompareTag("Player")) {
+            playerCanTransition = false;
+        }
+    }
+
+    private void Update() {
+        // 检测玩家是否在传送范围内并按下 "T" 键触发传送
+        if (playerCanTransition && Input.GetKeyDown(KeyCode.T)) {
+            Debug.Log($"按下T键，准备传送到: {destinationTag}");
+            SceneController.Instance.TransitionToDestination(this); // 调用场景控制器进行传送
+            playerCanTransition = false; // 防止重复传送
+        }
+    }
 }

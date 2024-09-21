@@ -49,7 +49,7 @@ public class Weapon : MonoBehaviour
             if (enemyStats != null)
             {
                 // 计算并应用伤害
-                enemyStats.TakeDamage(playerStats, enemyStats);
+                enemyStats.TakeCharacterDamage(playerStats, enemyStats);
             }
         }
     }

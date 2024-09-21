@@ -3,43 +3,43 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameManager : Singleton<GameManager>
-{
+public class GameManager : Singleton<GameManager> {
     public CharacterStats playerStats;
 
-    List<IEndGameObserver> endGameObservers = new List<IEndGameObserver>();
+    private Camera playerCamera;
+    private List<IGameOverObserver> endGameObservers = new List<IGameOverObserver>();
 
-    /// <summary>
-    /// 注册玩家
-    /// </summary>
-    /// <param name="player"></param>
-    public void RegisterPlayer(CharacterStats player)
-    {
-        playerStats = player;
+    protected override void Awake() {
+        base.Awake();
+        DontDestroyOnLoad(this.gameObject);
     }
 
-    public void AddObserver(IEndGameObserver observer)
-    {
+    public void RegisterPlayer(CharacterStats player) {
+        playerStats = player;
+        playerCamera = Camera.main;
+    }
+
+    public void AddObserver(IGameOverObserver observer) {
         endGameObservers.Add(observer);
     }
 
-    public void RemoveObserver(IEndGameObserver observer)
-    {
+    public void RemoveObserver(IGameOverObserver observer) {
         endGameObservers.Remove(observer);
     }
 
-    /// <summary>
-    /// 观察者广播
-    /// </summary>
-    public void NotifyObservers()
-    {
-        foreach (var observer in endGameObservers)
-        {
-            observer.EndNotify();
+    public void NotifyObservers() {
+        foreach (var observer in endGameObservers) {
+            observer.PlayerDeadNotify();
         }
     }
 
-
-
-
+    public Transform GetEntrance() {
+        foreach (var item in FindObjectsOfType<TransitionDestination>()) {
+            if (item.destinationtag == TransitionDestination.DestinationTag.Enter) {
+                return item.transform;
+            }
+        }
+        Debug.Log("没有找到入口");
+        return null;
+    }
 }

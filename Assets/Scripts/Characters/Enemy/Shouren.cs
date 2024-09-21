@@ -17,7 +17,7 @@ public class Shouren : EnemyController
         {
             {
                 knockbackDirection = (attackTarget.transform.position - transform.position).normalized;
-                attackTarget.GetComponent<PlayerController>().Knockback(knockbackDirection* kickBackForce);
+                attackTarget.GetComponent<PlayerController>().KnockbackPlayer(knockbackDirection* kickBackForce);
 
                 attackTarget.GetComponent<Animator>().SetTrigger("Dizzy");
                 Debug.Log("½ÇÉ«±»Ñ£ÔÎÇÒ»÷ÍË");
