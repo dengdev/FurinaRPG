@@ -1,29 +1,29 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CharacterStats : MonoBehaviour {
 
-    public event Action<int, int> OnHealthChanged; // 血量变化事件
-    public event Action OnDeath;// 角色死亡事件   
+    public event Action<int, int> OnHealthChanged;
+    public event Action OnDeath;
 
     [Header("角色数据")]
     public CharacterData_SO characterTemplateData;
-    public CharacterData_SO characterData;
     public Attackdata_SO attackData;
+    public CharacterData_SO characterData;
+
+    private Animator animator;
 
     [HideInInspector]
     public bool isCritical; // 是否暴击
-    public int previousState; // 受击前的状态
+    public bool isAttacking; // 是否在攻击中
 
-    private Animator animator;
     private bool isHitAnimation; // 是否在受击动画中
+    private int previousState;
 
     private void Awake() {
         if (characterTemplateData != null)
             characterData = Instantiate(characterTemplateData);
-
         animator = GetComponent<Animator>();
     }
 
@@ -60,9 +60,7 @@ public class CharacterStats : MonoBehaviour {
         TriggerHitAnimation(defender);
     }
 
-    public void TakeDamage(int damage, CharacterStats defender) {
-        if (defender == null) { Debug.LogWarning("Defender is null"); return; }
-
+    public void TakeRockDamage(int damage, CharacterStats defender) {
         int finalDamage = CalculateDamage(damage, defender.CurrentDefence);
         ApplyDamage(finalDamage, defender);
         TriggerHitAnimation(defender);
@@ -79,20 +77,15 @@ public class CharacterStats : MonoBehaviour {
 
     private void ApplyDamage(int damage, CharacterStats defender) {
         defender.CurrentHealth = Mathf.Max(defender.CurrentHealth - damage, 0);
-        defender.OnHealthChanged?.Invoke(defender.CurrentHealth, defender.MaxHealth);
-        if (defender.CurrentHealth <= 0) { 
-        CheckCharacterDeath(GameManager.Instance.playerStats, defender);
-    }
-
-    }
-
-    private void CheckCharacterDeath(CharacterStats attacker, CharacterStats defender) {
-        if (defender.CurrentHealth <= 0 && defender.characterData != null) {
-            if (attacker != null) {
-                attacker.characterData.UpdateExp(defender.characterData.killPoint); // 玩家获得击杀经验
-            }
+        if (defender.CurrentHealth <= 0) {
             defender.OnDeath?.Invoke();
+            PlayerGainExp(defender);
         }
+        OnHealthChanged?.Invoke(defender.CurrentHealth, defender.MaxHealth);
+    }
+
+    private void PlayerGainExp(CharacterStats defender) {
+        GameManager.Instance.playerStats.characterData.UpdateExp(defender.characterData.killPoint); // 玩家获得击杀经验
     }
 
     private void TriggerHitAnimation(CharacterStats defender) {
@@ -102,16 +95,16 @@ public class CharacterStats : MonoBehaviour {
         if (defender.animator != null) {
             defender.previousState = defender.animator.GetCurrentAnimatorStateInfo(0).shortNameHash;
             defender.animator.SetTrigger("Hit");
-            StartCoroutine(WaitForHitAnimation(defender));
+            StartCoroutine(ResetHitAnimation(defender));
         }
     }
 
-    private IEnumerator WaitForHitAnimation(CharacterStats defender) {
-        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        yield return new WaitForSeconds(stateInfo.length);
-
+    private IEnumerator ResetHitAnimation(CharacterStats defender) {
+        yield return new WaitForSeconds(defender.animator.GetCurrentAnimatorStateInfo(0).length);
         defender.isHitAnimation = false;
-        defender.animator.Play(defender.previousState);
+        if (!defender.isAttacking) {
+            defender.animator.Play(defender.previousState);
+        }
     }
     #endregion
 }

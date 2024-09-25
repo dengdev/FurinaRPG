@@ -3,11 +3,11 @@ using UnityEngine.UIElements;
 
 public class CameraFollow : MonoBehaviour {
     [SerializeField] private LayerMask obstacleLayer; // 障碍物图层
-    private float cameraMoveSpeed = 3.0f; // 相机移动速度
-    private float sensitivity = 3.0f; // 视角灵敏度
-    private float zoomSpeed = 5.0f; // 相机缩放速度
-    private float minDistance = 1.5f; // 镜头最近距离
-    private float maxDistance = 8.5f; // 镜头最远距离
+     private float cameraMoveSpeed = 10.0f; // 相机移动速度
+     private float sensitivity = 0.8f; // 视角灵敏度
+     private float zoomSpeed = 2.5f; // 相机缩放速度
+     private float minDistance = 1.5f; // 镜头最近距离
+     private float maxDistance = 16f; // 镜头最远距离
 
     private Transform _playerTarget;
     private Vector3 startOffset; // 相机初始偏移

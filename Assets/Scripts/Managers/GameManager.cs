@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 public class GameManager : Singleton<GameManager> {
     public CharacterStats playerStats;
 
-    private Camera playerCamera;
     private List<IGameOverObserver> endGameObservers = new List<IGameOverObserver>();
 
     protected override void Awake() {
@@ -16,7 +15,6 @@ public class GameManager : Singleton<GameManager> {
 
     public void RegisterPlayer(CharacterStats player) {
         playerStats = player;
-        playerCamera = Camera.main;
     }
 
     public void AddObserver(IGameOverObserver observer) {
@@ -28,13 +26,13 @@ public class GameManager : Singleton<GameManager> {
     }
 
     public void NotifyObservers() {
-        foreach (var observer in endGameObservers) {
+        foreach (IGameOverObserver observer in endGameObservers) {
             observer.PlayerDeadNotify();
         }
     }
 
     public Transform GetEntrance() {
-        foreach (var item in FindObjectsOfType<TransitionDestination>()) {
+        foreach (TransitionDestination item in FindObjectsOfType<TransitionDestination>()) {
             if (item.destinationtag == TransitionDestination.DestinationTag.Enter) {
                 return item.transform;
             }

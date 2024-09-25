@@ -91,7 +91,7 @@ public class Rock : MonoBehaviour {
                 playerController.KnockbackPlayer(knockbackDirection * force); // 调用Knockback方法
             }
 
-            characterStats.TakeDamage(damage, characterStats);
+            characterStats.TakeRockDamage(damage, characterStats);
             rockState = RockStates.HitNothing;
         }
     }
@@ -103,7 +103,7 @@ public class Rock : MonoBehaviour {
     private void HandleEnemyCollision(Collision collision) {
         if (collision.gameObject.GetComponent<Stoneren>()) {
             var characterStats = collision.gameObject.GetComponent<CharacterStats>();
-            characterStats.TakeDamage(damage * 3, characterStats); // 碰撞到石头人，造成三倍伤害
+            characterStats.TakeRockDamage(damage * 3, characterStats); // 碰撞到石头人，造成三倍伤害
             Instantiate(breakEffect, transform.position, Quaternion.identity); // 生成击碎特效
             Destroy(gameObject);
         }

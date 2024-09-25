@@ -5,13 +5,20 @@ using UnityEngine.SceneManagement;
 
 public class SceneController : Singleton<SceneController> {
 
-    [SerializeField] private string playerPrefabsPath;
+    public SceneFader sceneFaderPrefab;
+    [SerializeField] private string playerPrefabPath = "Prefabs/Player";
     private Transform playerTransform;
+    //private string sceneFaderPrefabPath = "UI/FadeCanvas";
+
+    private float fadeOutTime=1.2f;
+    private float fadeInTime = 1.0f;
+
 
     protected override void Awake() {
         base.Awake();
         DontDestroyOnLoad(this.gameObject);
     }
+
 
     public void TransitionToDestination(TransitionPoint transitionPoint) {
         switch (transitionPoint.transitionType) {
@@ -41,7 +48,7 @@ public class SceneController : Singleton<SceneController> {
 
             if (GameObject.FindGameObjectWithTag("Player") == null) {
                 if (ResourceManager.IsInitialized) {
-                    GameObject player = ResourceManager.Instance.InstantiateResource("Prefabs/Player", destination.transform.position, destination.transform.rotation);
+                    GameObject player = ResourceManager.Instance.InstantiateResource(playerPrefabPath, destination.transform.position, destination.transform.rotation);
                     yield return player;
                 }
             }
@@ -104,23 +111,31 @@ public class SceneController : Singleton<SceneController> {
     }
 
     IEnumerator LoadScene(string sceneName) {
-        if (sceneName != null) {
+        //SceneFader sceneFader = ResourceManager.Instance.LoadResource<SceneFader>(sceneFaderPrefabPath);
+        SceneFader fader = Instantiate(sceneFaderPrefab);
+        if (!string.IsNullOrEmpty(sceneName)) {
+            yield return StartCoroutine(fader.FadeOut(fadeOutTime));
             yield return SceneManager.LoadSceneAsync(sceneName);
 
             if (GameObject.FindGameObjectWithTag("Player") == null) {
                 if (ResourceManager.IsInitialized) {
-                    GameObject player = ResourceManager.Instance.InstantiateResource("Prefabs/Player", GameManager.Instance.GetEntrance().position, GameManager.Instance.GetEntrance().rotation);
+                    GameObject player = ResourceManager.Instance.InstantiateResource(playerPrefabPath, GameManager.Instance.GetEntrance().position, GameManager.Instance.GetEntrance().rotation);
                     yield return player;
                 }
             }
 
             SaveManager.Instance.SavePlayerData();
+            yield return StartCoroutine(fader.FadeIn(fadeInTime));
             yield break;
         }
     }
 
     IEnumerator LoadMainMenu() {
+        SceneFader fader = Instantiate(sceneFaderPrefab);
+        yield return StartCoroutine(fader.FadeOut(fadeOutTime));
         yield return SceneManager.LoadSceneAsync("MainMenuScene");
+        yield return StartCoroutine(fader.FadeIn(fadeInTime));
         yield break;
     }
+
 }
