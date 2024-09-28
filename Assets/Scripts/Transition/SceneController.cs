@@ -10,7 +10,7 @@ public class SceneController : Singleton<SceneController> {
     private Transform playerTransform;
     //private string sceneFaderPrefabPath = "UI/FadeCanvas";
 
-    private float fadeOutTime=1.2f;
+    private float fadeOutTime = 1.2f;
     private float fadeInTime = 1.0f;
 
 

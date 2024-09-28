@@ -2,26 +2,25 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Shouren : EnemyController
-{
+public class Shouren : EnemyController {
     [Header("Skill")]
-    public float kickBackForce = 20;
-    private Vector3 knockbackDirection;
+    public float GrapForce = 20;
+    private Vector3 GrapDirection;
 
     /// <summary>
     /// 动画中调用，后期要改
     /// </summary>
-    public void KickOff()
-    {
-        if(attackTarget != null && transform.IsFacingTarget(attackTarget.transform))
-        {
-            {
-                knockbackDirection = (attackTarget.transform.position - transform.position).normalized;
-                attackTarget.GetComponent<PlayerController>().KnockbackPlayer(knockbackDirection* kickBackForce);
+    public void Grap() {
+        if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
+            var targetStats = attackTarget.GetComponent<CharacterStats>();
 
-                attackTarget.GetComponent<Animator>().SetTrigger("Dizzy");
-                Debug.Log("角色被眩晕且击退");
-
+            if (attackTarget.GetComponent<PlayerController>() != null) {
+                PlayerController player = attackTarget.GetComponent<PlayerController>();
+                GrapDirection = (transform.position - player.transform.position).normalized;
+                player.KnockbackPlayer(GrapDirection * GrapForce);
+                player.playerIsDizzy = true;
+                player.ChangeState(new HitState());
+                targetStats.TakeCharacterDamage(enemyStats, targetStats);
             }
         }
     }

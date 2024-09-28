@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca452d08b3b5cfd4782f283308f2cab2, type: 3}
   m_Name: Shouren Attack Data
   m_EditorClassIdentifier: 
-  attackRange: 2
+  attackRange: 1.6
   skillRange: 2.6
   coolDown: 5
   minDamage: 6

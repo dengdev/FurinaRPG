@@ -13,8 +13,12 @@ public class GameManager : Singleton<GameManager> {
         DontDestroyOnLoad(this.gameObject);
     }
 
+    // 第一次注册时数据未加载，第二注册才成功加载数据
     public void RegisterPlayer(CharacterStats player) {
         playerStats = player;
+        if (playerStats.characterData != null) {
+            GameObject.Find("PlayerHealth Canvas").transform.GetChild(0).gameObject.SetActive(true);
+        }
     }
 
     public void AddObserver(IGameOverObserver observer) {

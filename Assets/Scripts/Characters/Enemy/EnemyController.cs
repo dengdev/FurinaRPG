@@ -29,14 +29,13 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     private Quaternion guardRotation; // 守卫模式下敌人的初始朝向
 
     [Header("Alert Settings")]
-    public float alertTime = 1.2f; // 警觉时间
-    private float alertTimer; // 当前的警觉计时器
+    public float alertTime = 3f; // 警觉时间
+    [SerializeField]private float alertTimer; // 当前的警觉计时器
 
     // 控制动画状态的布尔值
     bool isWalking, isChasing, isFollow, isDead;
     bool playerDead; // 玩家是否死亡
 
-    // 初始化组件和变量
     void Awake() {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -49,7 +48,6 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         remainLookAtTime = lookAtTime; // 初始化观察时间
     }
 
-    // 开始时设置敌人状态
     private void Start() {
         enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL; // 初始化状态
         if (!isGuard) {
@@ -282,7 +280,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     private void Hit() {
         // 攻击的时候要判断玩家是否在攻击范围内
         if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
-            var targetStats = attackTarget.GetComponent<CharacterStats>();
+            CharacterStats targetStats = attackTarget.GetComponent<CharacterStats>();
             targetStats.TakeCharacterDamage(enemyStats, targetStats); // 执行伤害
         }
     }

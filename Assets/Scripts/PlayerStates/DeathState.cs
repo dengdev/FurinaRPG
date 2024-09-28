@@ -23,4 +23,5 @@ public class DeathState : IPlayerState {
         yield return new WaitForSeconds(gameEndTime);
         SceneController.Instance.TransitionToMainMenuScene();
     }
+
 }

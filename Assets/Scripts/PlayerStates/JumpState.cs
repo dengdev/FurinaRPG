@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class JumpState : IPlayerState {
     private PlayerController player;
+    private readonly float gravity = -9.8f; // 重力加速度
+
 
     public void Enter(PlayerController player) {
         this.player = player;
@@ -13,12 +15,12 @@ public class JumpState : IPlayerState {
     }
 
     public void Update() {
-        player.jumpVelocity += player.gravity * Time.deltaTime;
+        player.jumpVelocity += gravity * Time.deltaTime;
         player.characterController.Move(player.moveDirection * player.currentMoveSpeed * Time.deltaTime + player.jumpVelocity * Time.deltaTime * Vector3.up);
 
         if (player.jumpVelocity < 0) {
             player.ChangeState(new IdleState()); // 切换到闲置状态
-        } 
+        }
     }
 
     public void Exit() {
@@ -27,7 +29,7 @@ public class JumpState : IPlayerState {
 
     private void Jump() {
         if (player.jumpVelocity < 0) {
-            player.jumpVelocity = Mathf.Sqrt(2 * player.playerJumpHeight * -player.gravity);
+            player.jumpVelocity = Mathf.Sqrt(2 * player.playerJumpHeight * -gravity);
         }
     }
 }

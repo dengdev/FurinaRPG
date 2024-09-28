@@ -8,15 +8,17 @@ public class PlayerController : MonoBehaviour {
     private float walkSpeed = 4f;
     private float runSpeed = 8f;
     public float playerJumpHeight = 2f;
-    public float gravity = -9.8f; // 重力加速度
     public float currentMoveSpeed;
     public bool isGround;
-    public bool playerIsAttacking; // 是否正在攻击
+    public bool playerIsAttacking; 
+    public bool playerIsHIt;
+    public bool playerIsDizzy;
 
     public float jumpVelocity;
     public bool isRunning = false;
-    public Vector3 moveDirection = Vector3.zero; // 角色移动方向
+    public Vector3 moveDirection = Vector3.zero; 
 
+    //private Canvas playerHPCanvas;
 
     public float WalkSpeed {
         get { return walkSpeed; }
@@ -30,9 +32,8 @@ public class PlayerController : MonoBehaviour {
 
     [Header("Attack Settings")]
     public Weapon weapon;
-    public float playerAttackRange;
-    public float knockbackDuration = 0.5f; // 击退时间
-    private float knockbackTimer; // 击退的时间
+    public float knockbackDuration = 0.5f; 
+    private float knockbackTimer; 
 
     public  Transform cameraTransform;
     public CharacterController characterController;
@@ -40,24 +41,25 @@ public class PlayerController : MonoBehaviour {
     public CharacterStats playerStats;
     private IPlayerState currentState;
 
-    public CharacterStats GetplayerStats { get { return playerStats; } }
-
-
     private void Awake() {
         animator = GetComponent<Animator>();
         playerStats = GetComponent<CharacterStats>();
         cameraTransform = Camera.main.transform;
         characterController = GetComponent<CharacterController>();
-        GameManager.Instance.RegisterPlayer(playerStats);
     }
 
     private void OnEnable() {
+        Debug.Log("玩家控制器试图注册");
         GameManager.Instance.RegisterPlayer(playerStats);
     }
 
     void Start() {
-        isGround=true;
+        Debug.Log("加载玩家数据");
         SaveManager.Instance.LoadPlayerData();
+        Debug.Log("玩家控制器试图再次注册");
+        GameManager.Instance.RegisterPlayer(playerStats);
+
+        isGround = true;
         ChangeState(new IdleState());
     }
 
@@ -72,6 +74,10 @@ public class PlayerController : MonoBehaviour {
         if (knockbackTimer > 0) {
             HandleKnockback();
         }
+    }
+
+    public bool NowIsHitState() {
+        return currentState is HitState ;
     }
 
     public void ChangeState(IPlayerState newState) {
@@ -92,10 +98,14 @@ public class PlayerController : MonoBehaviour {
         moveDirection = knockbackForce;
     }
 
+    //private void ShowHPBar() {
+    //    // 通过查找渲染模式找到血条挂载的画布。
+    //    foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
+    //        if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
+    //            playerHPCanvas = canvas;
+    //            playerHPCanvas.transform.GetChild(0).gameObject.SetActive(true);
+    //        }
+    //    }
 
-
-    private void OnDrawGizmos() {
-        Gizmos.color = Color.black;
-        Gizmos.DrawWireSphere(transform.position, playerAttackRange);
-    }
+    //}
 }

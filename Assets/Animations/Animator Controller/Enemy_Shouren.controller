@@ -161,7 +161,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Victory
+  m_Name: Win
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -578,8 +578,7 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -9033377548561657013}
-  m_StateMachineBehaviours:
-  - {fileID: 2085509891228590375}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -655,7 +654,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1ba6bda8aa59bbf4bbd9c9c3bbe26546, type: 3}
+  m_Script: {fileID: 0}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1102 &3155719884614362517
@@ -670,8 +669,7 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 6323718755945104552}
-  m_StateMachineBehaviours:
-  - {fileID: 7094089603724284680}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1
@@ -698,8 +696,7 @@ AnimatorState:
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -844077547913311437}
-  m_StateMachineBehaviours:
-  - {fileID: 6442196807709601086}
+  m_StateMachineBehaviours: []
   m_Position: {x: 50, y: 50, z: 0}
   m_IKOnFeet: 0
   m_WriteDefaultValues: 1

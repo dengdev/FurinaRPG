@@ -5,7 +5,7 @@ using UnityEngine;
 public class Stoneren : EnemyController {
     [Header("石头人技能设置")]
     public float kickBackForce = 60;
-    private Vector3 knockbackDirection; // 击退方向
+    private Vector3 knockbackDirection; 
 
     public GameObject rockPrefab;
     public Transform handPos;
@@ -13,13 +13,14 @@ public class Stoneren : EnemyController {
     // Animation Event
     public void KickOff() {
         if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
-            var targetStats = attackTarget.GetComponent<CharacterStats>();
-            {
-                knockbackDirection = (attackTarget.transform.position - transform.position).normalized;
-                attackTarget.GetComponent<PlayerController>().KnockbackPlayer(knockbackDirection * kickBackForce);
+            CharacterStats targetStats = attackTarget.GetComponent<CharacterStats>();
 
-                //attackTarget.GetComponent<Animator>().SetTrigger("Dizzy");
-                //Debug.Log("角色被眩晕且击退");
+            if (attackTarget.GetComponent<PlayerController>() != null) {
+                PlayerController player = attackTarget.GetComponent<PlayerController>();
+                knockbackDirection = (player.transform.position - transform.position).normalized;
+                player.KnockbackPlayer(knockbackDirection * kickBackForce);
+                player.playerIsDizzy = true;
+                player.ChangeState(new HitState());
                 targetStats.TakeCharacterDamage(enemyStats, targetStats);
             }
         }

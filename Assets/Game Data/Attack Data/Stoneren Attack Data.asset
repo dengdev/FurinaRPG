@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca452d08b3b5cfd4782f283308f2cab2, type: 3}
   m_Name: Stoneren Attack Data
   m_EditorClassIdentifier: 
-  attackRange: 3.5
+  attackRange: 4
   skillRange: 15
-  coolDown: 7
+  coolDown: 5
   minDamage: 10
   maxDamage: 25
   criticalMultiplier: 2

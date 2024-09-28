@@ -715,10 +715,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterTemplateData: {fileID: 11400000, guid: be518f4402051b841bddf806bceee5e6, type: 2}
-  characterData: {fileID: 0}
   attackData: {fileID: 11400000, guid: 7b89cb802169b9c49859eb9b15709023, type: 2}
+  characterData: {fileID: 0}
   isCritical: 0
-  previousState: 0
+  isAttacking: 0
 --- !u!114 &88133499528219576
 MonoBehaviour:
   m_ObjectHideFlags: 0

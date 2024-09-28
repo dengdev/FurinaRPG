@@ -14,11 +14,18 @@ public class SaveManager : Singleton<SaveManager> {
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.Escape)) {
+            Debug.Log("按下Esc返回到主菜单");
             SceneController.Instance.TransitionToMainMenuScene();
         }
 
-        if (Input.GetKeyDown(KeyCode.R)) { SavePlayerData(); }
-        if (Input.GetKeyDown(KeyCode.L)) { LoadPlayerData(); }
+        if (Input.GetKeyDown(KeyCode.R)) { 
+            
+            Debug.Log("按下R保存玩家数据");
+            SavePlayerData(); }
+        if (Input.GetKeyDown(KeyCode.L)) { 
+            
+            Debug.Log("按下L读取玩家数据");
+            LoadPlayerData(); }
     }
 
     public void SavePlayerData() {
@@ -26,6 +33,7 @@ public class SaveManager : Singleton<SaveManager> {
     }
 
     public void LoadPlayerData() {
+        Debug.Log("正在加载角色数据");
         Load(GameManager.Instance.playerStats.characterData, GameManager.Instance.playerStats.characterData.name);
     }
 

@@ -46,3 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sceneFaderPrefab: {fileID: 6676370540665888960, guid: f6b49631c4504a647910539b719f3556, type: 3}
   playerPrefabPath: Prefabs/Player
+  playerHPCanvas: {fileID: 2282377073387666495, guid: 6869ccafc1795704f9ba7db300b5a7a2, type: 3}

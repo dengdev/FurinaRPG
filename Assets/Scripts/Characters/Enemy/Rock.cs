@@ -4,26 +4,25 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Rock : MonoBehaviour {
-    [Header("Base Setting")]
+    [Header("Base Rock Setting")]
     public GameObject target;
-    private int damage = 10;// 石头造成的伤害
-    private float force = 10.0f;
-    [SerializeField] private GameObject breakEffect; // 击碎特效
-     private Vector3 direction;
+    [SerializeField] private int rockDamage = 10;
+    [SerializeField] private float rockForce = 10.0f;
+    [SerializeField] private GameObject breakEffect;
+    [SerializeField] private int HitStoneRen_Multiply = 3;
 
     public enum RockStates { HitPlayer, HitEnemy, HitNothing }
     public RockStates rockState;
 
     private Rigidbody rb;
-
-    private float initialStateDuration = 0.5f; // 初始状态持续时间
-    private float stateTimer; // 计时器
-    private bool isInInitialState = true; // 是否处于初始状态
+    private float initialStateDuration = 0.5f;
+    private float stateTimer;
+    private bool isInInitialState = true; 
 
     private void Start() {
         rb = GetComponent<Rigidbody>();
-        stateTimer = 0f; // 初始化计时器
-        rockState = RockStates.HitPlayer; // 初始状态
+        stateTimer = 0f;
+        rockState = RockStates.HitPlayer;
         FlyToTarget();
     }
 
@@ -33,18 +32,17 @@ public class Rock : MonoBehaviour {
         }
         CheckRockState();
     }
+
     private void UpdateStateTimer() {
-        stateTimer += Time.fixedDeltaTime; // 增加计时器
+        stateTimer += Time.fixedDeltaTime;
         if (stateTimer >= initialStateDuration) {
-            isInInitialState = false; // 超过时间，停止更新计时器
+            isInInitialState = false;
         }
     }
 
     private void CheckRockState() {
-        if (!isInInitialState) {
-            if (rb.velocity.sqrMagnitude < 1f) {
-                rockState = RockStates.HitNothing;
-            }
+        if (rb.velocity.sqrMagnitude < 1f) {
+            rockState = RockStates.HitNothing;
         }
     }
 
@@ -53,8 +51,8 @@ public class Rock : MonoBehaviour {
             target = FindObjectOfType<PlayerController>().gameObject;
         }
 
-        direction = CalculateDirectionToTarget();
-        rb.AddForce(force * direction, ForceMode.Impulse); // 给石头一个力
+       Vector3 direction = CalculateDirectionToTarget();
+        rb.AddForce(rockForce * direction, ForceMode.Impulse); 
     }
 
     private Vector3 CalculateDirectionToTarget() {
@@ -75,35 +73,32 @@ public class Rock : MonoBehaviour {
                 HandleEnemyCollision(collision);
                 break;
             case RockStates.HitNothing:
-                // 什么都不做
                 break;
             default:
                 break;
         }
     }
     private void HandlePlayerCollision(Collision collision) {
+
         if (collision.gameObject.CompareTag("Player")) {
-            var playerController = collision.gameObject.GetComponent<PlayerController>();
+            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
             var characterStats = collision.gameObject.GetComponent<CharacterStats>();
 
-            if (playerController != null) {
-                Vector3 knockbackDirection = CalculateKnockbackDirection(collision);
-                playerController.KnockbackPlayer(knockbackDirection * force); // 调用Knockback方法
+            if (player != null) {
+                Vector3 knockbackDirection = (collision.transform.position - transform.position).normalized;
+                player.KnockbackPlayer(knockbackDirection * rockForce); // 调用Knockback方法
+                Debug.Log("岩石击退玩家");
             }
 
-            characterStats.TakeRockDamage(damage, characterStats);
+            characterStats.TakeRockDamage(rockDamage, characterStats);
             rockState = RockStates.HitNothing;
         }
     }
 
-    private Vector3 CalculateKnockbackDirection(Collision collision) {
-        return (collision.transform.position - transform.position).normalized; // 计算击退方向
-    }
-
     private void HandleEnemyCollision(Collision collision) {
         if (collision.gameObject.GetComponent<Stoneren>()) {
-            var characterStats = collision.gameObject.GetComponent<CharacterStats>();
-            characterStats.TakeRockDamage(damage * 3, characterStats); // 碰撞到石头人，造成三倍伤害
+            CharacterStats defender = collision.gameObject.GetComponent<CharacterStats>();
+            defender.TakeRockDamage(rockDamage * HitStoneRen_Multiply, defender); 
             Instantiate(breakEffect, transform.position, Quaternion.identity); // 生成击碎特效
             Destroy(gameObject);
         }

@@ -63,6 +63,7 @@ public class EnemyHealthBarUI : MonoBehaviour {
             }
         }
 
+        // 通过查找渲染模式找到血条挂载的画布。
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace && uiBarTransform == null) {
                 uiBarTransform = Instantiate(healthUIPrefab, canvas.transform).transform;
