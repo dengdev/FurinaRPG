@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "item_ID": 1,
+      "item_Name": "树莓",
+      "item_MaxStack": 20,
+      "item_IconPath": "树莓",
+      "item_Description": "随处可见的树莓，适合做成果酱。",
+      "item_Quality": "Common",
+      "item_Type": "Material",
+      "item_CurrentQuantity": 0
+    },
+    {
+      "item_ID": 2,
+      "item_Name": "番茄",
+      "item_MaxStack": 20,
+      "item_IconPath": "番茄",
+      "item_Description": "一种新鲜的番茄。",
+      "item_Quality": "Common",
+      "item_Type": "Material",
+      "item_CurrentQuantity": 0
+    },
+    {
+      "item_ID": 3,
+      "item_Name": "石珀",
+      "item_MaxStack": 99,
+      "item_IconPath": "石珀",
+      "item_Description": "一种珍贵的材料，色泽明亮，适合做饰品。",
+      "item_Quality": "Uncommon",
+      "item_Type": "Material",
+      "item_CurrentQuantity": 0
+    },
+    {
+      "item_ID": 4,
+      "item_Name": "蓝书",
+      "item_MaxStack": 10,
+      "item_IconPath": "蓝书",
+      "item_Description": "一本关于冒险者的书籍，阅读后能够增加经验！",
+      "item_Quality": "Rare",
+      "item_Type": "CultivationMaterial",
+      "item_CurrentQuantity": 0
+    },
+    {
+      "item_ID": 5,
+      "item_Name": "蒙德土豆饼",
+      "item_MaxStack": 15,
+      "item_IconPath": "蒙德土豆饼",
+      "item_Description": "一种美味的土豆饼，恢复健康。",
+      "item_Quality": "Common",
+      "item_Type": "Cuisine",
+      "item_CurrentQuantity": 0
+    }
+  ]
+}

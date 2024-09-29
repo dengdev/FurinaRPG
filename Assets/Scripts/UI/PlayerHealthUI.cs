@@ -55,8 +55,8 @@ public class PlayerHealthUI : MonoBehaviour {
         float currentExp = GameManager.Instance.playerStats.characterData.currentExp;
         float baseExp = GameManager.Instance.playerStats.characterData.baseExp;
         float eXPPercent = currentExp / baseExp;
-        _LevelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
         StartCoroutine(ChangeFillAmount(_EXPSlider, eXPPercent, 0.5f, true)); // 0.5秒内变化
+        
     }
 
     private IEnumerator ChangeFillAmount(Image slider, float target, float duration, bool isExp) {
@@ -72,6 +72,9 @@ public class PlayerHealthUI : MonoBehaviour {
             }
             slider.fillAmount = 1;
             time = 0;
+            // 经验达到上限后更新等级和血量
+            _LevelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
+            PlayerStats_OnHealthChanged(GameManager.Instance.playerStats.CurrentHealth, GameManager.Instance.playerStats.MaxHealth);
 
             while (time < duration) {
                 time += Time.deltaTime;

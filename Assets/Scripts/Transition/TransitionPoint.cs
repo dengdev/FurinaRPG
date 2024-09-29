@@ -1,8 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class TransitionPoint : MonoBehaviour {
     public enum TransitionType { SameScene, DifferentScene }

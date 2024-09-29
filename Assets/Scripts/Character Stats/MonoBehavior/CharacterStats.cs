@@ -1,11 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 public class CharacterStats : MonoBehaviour {
-
-
 
     public event Action<int, int> OnHealthChanged;
     public event Action OnDeath;
@@ -73,12 +72,7 @@ public class CharacterStats : MonoBehaviour {
         set { characterData.currentDefence = value; }
     }
     #endregion
-
-
-    private void LateUpdate() {
-
-    }
-
+   
     #region 角色战斗逻辑
     public void TakeCharacterDamage(CharacterStats attacker, CharacterStats defender) {
         if (attacker == null || defender == null) return;
@@ -131,7 +125,6 @@ public class CharacterStats : MonoBehaviour {
             UnityEngine.Random.Range(0.8f, 1.4f), // 只在Y轴上产生正偏移
             UnityEngine.Random.Range(-randomRange, randomRange)
         );
-
 
         damageShow.position = defender.transform.position + randomOffset;
         damageShow.forward = Camera.main.transform.forward; // 使数字始终面向玩家
@@ -205,6 +198,5 @@ public class CharacterStats : MonoBehaviour {
         // 销毁对象
         Destroy(damageShow.gameObject);
     }
-
     #endregion
 }

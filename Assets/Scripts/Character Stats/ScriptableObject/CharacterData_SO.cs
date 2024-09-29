@@ -20,11 +20,15 @@ public class CharacterData_SO : ScriptableObject {
     public int baseExp, currentExp;
     public float levelBuff;
 
+    public List<Item> items; // 玩家拥有的道具和武器
+    public List<Currency> currencies; // 货币列表，如金币和原石
+
     private float LevelMultiplier { get { return 1 + (currentLevel - 1) * levelBuff; } }
 
     public void UpdateExp(int exp) {
+        if (exp < 0) return;
         currentExp += exp;
-        if (currentExp > baseExp - 1) {
+        while (currentExp >= baseExp) {
             LevelUp();
         }
     }

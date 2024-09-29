@@ -22,3 +22,6 @@ MonoBehaviour:
   baseExp: 50
   currentExp: 0
   levelBuff: 0.1
+  daggerIcon: {fileID: 21300000, guid: 84fc8ae3a19c68c4b8d2eb58992e7d63, type: 3}
+  swordIcon: {fileID: 21300000, guid: b49f3e4a201f3cb4bafaf6b90cd78bd7, type: 3}
+  currencies: []
