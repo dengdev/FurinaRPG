@@ -66,6 +66,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        if (Time.timeScale == 0) return;
         currentState?.Update();
 
         if (playerStats.CurrentHealth <= 0 && currentState is not DeathState) {
@@ -82,7 +83,7 @@ public class PlayerController : MonoBehaviour {
                 playerStats.characterData.items = new List<Item>();
             }
             playerStats.characterData.items.Add(SaveManager.Instance.allItems[4]);
-            Debug.Log("新游戏，添加0号和4号物品");
+            Debug.Log("新游戏，添加1号和4号物品");
             GameManager.Instance.playerStats.characterData.items.Add(SaveManager.Instance.allItems[1]);
 
         }

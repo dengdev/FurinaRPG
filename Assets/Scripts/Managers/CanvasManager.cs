@@ -4,37 +4,52 @@ using UnityEngine;
 
 public class CanvasManager : Singleton<CanvasManager>
 {
-    [SerializeField]private GameObject inventoryCanvas; // 背包 Canvas
+    [SerializeField] private List<GameObject> canvases;
 
     protected override void Awake() {
         base.Awake();
         DontDestroyOnLoad(gameObject);
+        InitializeCanvases();
     }
 
-    void Update() {
-        if (Input.GetKeyDown(KeyCode.B)) {
-            ToggleInventory();
+    private void InitializeCanvases() {
+        canvases.Clear(); // 清空现有列表
+        GameObject[] canvasPrefabs = Resources.LoadAll<GameObject>("Canvases");
+        foreach (GameObject prefab in canvasPrefabs) {
+            GameObject canvasInstance = Instantiate(prefab);
+            canvasInstance.SetActive(false);
+            canvases.Add(canvasInstance);
         }
     }
 
-    public void ToggleInventory() {
-        inventoryCanvas = GameObject.Find("Canvas").transform.GetChild(0).gameObject;
+   private  void Update() {
+        // 示例：按 B 打开/关闭背包
+        if (Input.GetKeyDown(KeyCode.B)) {
+            ToggleCanvas("InventoryCanvas");
+        }
 
-        if (GameManager.Instance.playerStats.characterData.items != null) {
-            bool isActive = inventoryCanvas.activeSelf;
-            inventoryCanvas.SetActive(!isActive);
-            Time.timeScale = isActive ? 1 : 0; 
-        } 
-        
+        // 示例：按 Esc 打开/关闭菜单
+        if (Input.GetKeyDown(KeyCode.Escape)) {
+            ToggleCanvas("MenuCanvas");
+        }
     }
 
-    public void CloseInventory() {
-        inventoryCanvas.SetActive(false);
-        Time.timeScale = 1; // 恢复游戏
+    public void ToggleCanvas(string canvasName) {
+        GameObject canvas = canvases.Find(c => c.name == canvasName + "(Clone)");
+        if (canvas != null) {
+            bool isActive = canvas.activeSelf;
+            canvas.SetActive(!isActive);
+            Time.timeScale = isActive ? 1 : 0; // 暂停或恢复游戏
+        } else {
+            Debug.Log($"未找到 Canvas: {canvasName}(Clone)");
+        }
     }
-    public void UpdateItemDetails(Item item) {
-        // 更新 ItemDetails 文本，显示选中物品信息
-        // 例如：
-        // itemDetailsText.text = item.description;
+
+     public void CloseCanvas(string canvasName) {
+        GameObject canvas = canvases.Find(c => c.name == canvasName);
+        if (canvas != null) {
+            canvas.SetActive(false);
+            Time.timeScale = 1; // 恢复游戏
+        }
     }
 }

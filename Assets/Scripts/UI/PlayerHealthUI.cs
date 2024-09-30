@@ -23,6 +23,7 @@ public class PlayerHealthUI : MonoBehaviour {
 
         GameManager.Instance.playerStats.OnHealthChanged += PlayerStats_OnHealthChanged;
         GameManager.Instance.playerStats.OnGainExp += PlayerStats_OnGainExp;
+        UpdatePlayerLevel();
     }
 
 
@@ -73,7 +74,7 @@ public class PlayerHealthUI : MonoBehaviour {
             slider.fillAmount = 1;
             time = 0;
             // 经验达到上限后更新等级和血量
-            _LevelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
+            UpdatePlayerLevel();
             PlayerStats_OnHealthChanged(GameManager.Instance.playerStats.CurrentHealth, GameManager.Instance.playerStats.MaxHealth);
 
             while (time < duration) {
@@ -90,5 +91,9 @@ public class PlayerHealthUI : MonoBehaviour {
             }
         }
         slider.fillAmount = target; // 确保最终值
+    }
+
+    private void UpdatePlayerLevel() {
+        _LevelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
     }
 }
