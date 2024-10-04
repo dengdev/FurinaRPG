@@ -4,24 +4,41 @@ using UnityEngine;
 
 public class AttackState : IPlayerState {
     private PlayerController player;
-    private float ATTACK_TIME = 1.3f;
-    private float hitRockForce = 25f;
+    private const  float ATTACK_TIME = 1.3f;
+    private const  float hitRockForce = 25f;
     private float timer;
 
     private HashSet<Collider> hitTargets = new HashSet<Collider>();
 
+    private const float COLLIDER_ENABLE_TIME = 0.3f;
+    private const float COLLIDER_DISABLE_TIME = 0.6f;
+    private bool isColliderEnabled = false;
+
+
     public void Enter(PlayerController player) {
-        player.playerStats.isCritical = Random.value < player.playerStats.attackData.criticalChance;
         this.player = player;
-        player.playerIsAttacking = true; // 标记为正在攻击
+        player.playerStats.isCritical = Random.value < player.playerStats.attackData.criticalChance;
+        player.playerIsAttacking = true; 
         player.animator.SetTrigger("Attack");
         timer = ATTACK_TIME;
-        player.weapon.EnableWeaponCollider();
-        hitTargets.Clear(); // 攻击开始时清空已命中的目标集合
+        hitTargets.Clear();
+        isColliderEnabled = false;
     }
 
     public void Update() {
         timer -=Time.deltaTime;
+
+        AnimatorStateInfo stateInfo = player.animator.GetCurrentAnimatorStateInfo(0);
+
+        if (!isColliderEnabled && stateInfo.normalizedTime >= COLLIDER_ENABLE_TIME && stateInfo.normalizedTime < COLLIDER_DISABLE_TIME) {
+            player.weapon.EnableWeaponCollider();
+            isColliderEnabled = true;
+        }
+
+        if (isColliderEnabled && stateInfo.normalizedTime >= COLLIDER_DISABLE_TIME) {
+            player.weapon.DisableWeaponCollider();
+            isColliderEnabled = false;
+        }
 
         Hit();
         if (timer<0) {
@@ -36,21 +53,13 @@ public class AttackState : IPlayerState {
 
 
     private void Hit() {
-        if (player.weapon.CheckCollision(out Collider target)) {
-            if (hitTargets.Contains(target)) {
-                return;
-            }
+        if (player.weapon.CheckCollision(out Collider target)&&!hitTargets.Contains(target)) {
+            hitTargets.Add(target);
 
-            // 对敌人目标进行处理
             if (target.TryGetComponent<CharacterStats>(out CharacterStats targetStats)) {
                 HandleEnemyAttack(targetStats);
-                hitTargets.Add(target); // 记录已击中的目标
-            }
-
-            // 对岩石目标进行处理
-            if (target.TryGetComponent<Rock>(out Rock rockComponent)) {
+            } else if (target.TryGetComponent<Rock>(out Rock rockComponent)) {
                 HandleRockAttack(rockComponent);
-                hitTargets.Add(target); // 记录已击中的目标
             }
         }
     }

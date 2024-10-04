@@ -1,14 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Rock;
 
 public class Stoneren : EnemyController {
     [Header("石头人技能设置")]
     public float kickBackForce = 60;
-    private Vector3 knockbackDirection; 
+    public float throwForce = 15;
+    private Vector3 knockbackDirection;
 
-    public GameObject rockPrefab;
     public Transform handPos;
+
+    private void Start() {
+    }
 
     // Animation Event
     public void KickOff() {
@@ -28,10 +32,20 @@ public class Stoneren : EnemyController {
 
     // Animation Event
     public void Throwrock() {
+        if (GameManager.Instance.rockPool == null) {
+            GameManager.Instance.rockPool = new ObjectPool(ResourceManager.Instance.LoadResource<GameObject>("Prefabs/Rock")
+, 3, 60, new GameObject("RockPool").transform);
+        }
         // 即使玩家脱离范围，也生成最后一块石头，避免动画不流畅
-        var rock = Instantiate(rockPrefab, handPos.position, Quaternion.identity);
-        rock.GetComponent<Rigidbody>().velocity = transform.forward;
-        rock.GetComponent<Rock>().target = attackTarget;
+        GameObject rock = GameManager.Instance.rockPool.GetFromPool();
+        if (rock != null) {
+
+            rock.transform.position = handPos.position;
+            Rigidbody rockRb = rock.GetComponent<Rigidbody>();
+
+            Vector3 direction = (attackTarget.transform.position - transform.position).normalized;
+            rockRb.AddForce(throwForce * direction, ForceMode.Impulse);
+        }
 
     }
 }

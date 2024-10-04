@@ -8,7 +8,11 @@ public class GameManager : Singleton<GameManager>,ISaveable {
 
     private List<IGameOverObserver> endGameObservers = new List<IGameOverObserver>();
 
+    public ObjectPool rockPool;
+
+
     protected override void Awake() {
+        
         base.Awake();
         DontDestroyOnLoad(this.gameObject);
     }

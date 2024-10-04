@@ -5,61 +5,44 @@ using UnityEngine;
 
 public class Rock : MonoBehaviour {
     [Header("Base Rock Setting")]
-    public GameObject target;
     [SerializeField] private int rockDamage = 10;
     [SerializeField] private float rockForce = 10.0f;
     [SerializeField] private GameObject breakEffect;
     [SerializeField] private int HitStoneRen_Multiply = 3;
 
-    public enum RockStates { HitPlayer, HitEnemy, HitNothing }
+    public enum RockStates { HitPlayer, HitEnemy, Default }
     public RockStates rockState;
 
     private Rigidbody rb;
-    private float initialStateDuration = 0.5f;
+    private float spawnTime = 0.5f;
     private float stateTimer;
-    private bool isInInitialState = true; 
 
     private void Start() {
+       
+    }
+
+    private void OnEnable() {
+        StopAllCoroutines();
         rb = GetComponent<Rigidbody>();
         stateTimer = 0f;
         rockState = RockStates.HitPlayer;
-        FlyToTarget();
+
+        StartCoroutine(LifeCycle());
     }
 
     private void FixedUpdate() {
-        if (isInInitialState) {
-            UpdateStateTimer();
+        if(rockState != RockStates.Default) {
+            stateTimer += Time.fixedDeltaTime;
         }
+
         CheckRockState();
     }
 
-    private void UpdateStateTimer() {
-        stateTimer += Time.fixedDeltaTime;
-        if (stateTimer >= initialStateDuration) {
-            isInInitialState = false;
-        }
-    }
-
     private void CheckRockState() {
-        if (rb.velocity.sqrMagnitude < 1f) {
-            rockState = RockStates.HitNothing;
+        if (stateTimer > spawnTime && rb.velocity.sqrMagnitude < 1f) {
+            rockState = RockStates.Default;
         }
     }
-
-    public void FlyToTarget() {
-        if (target == null) {
-            target = FindObjectOfType<PlayerController>().gameObject;
-        }
-
-       Vector3 direction = CalculateDirectionToTarget();
-        rb.AddForce(rockForce * direction, ForceMode.Impulse); 
-    }
-
-    private Vector3 CalculateDirectionToTarget() {
-        // TODO:考虑更真实的物理轨迹
-        return (target.transform.position - transform.position + Vector3.up).normalized;
-    }
-
     private void OnCollisionEnter(Collision collision) {
         HandleCollision(collision);
     }
@@ -72,7 +55,7 @@ public class Rock : MonoBehaviour {
             case RockStates.HitEnemy:
                 HandleEnemyCollision(collision);
                 break;
-            case RockStates.HitNothing:
+            case RockStates.Default:
                 break;
             default:
                 break;
@@ -87,11 +70,10 @@ public class Rock : MonoBehaviour {
             if (player != null) {
                 Vector3 knockbackDirection = (collision.transform.position - transform.position).normalized;
                 player.KnockbackPlayer(knockbackDirection * rockForce); // 调用Knockback方法
-                Debug.Log("岩石击退玩家");
             }
 
             characterStats.TakeRockDamage(rockDamage, characterStats);
-            rockState = RockStates.HitNothing;
+            rockState = RockStates.Default;
         }
     }
 
@@ -100,7 +82,26 @@ public class Rock : MonoBehaviour {
             CharacterStats defender = collision.gameObject.GetComponent<CharacterStats>();
             defender.TakeRockDamage(rockDamage * HitStoneRen_Multiply, defender); 
             Instantiate(breakEffect, transform.position, Quaternion.identity); // 生成击碎特效
-            Destroy(gameObject);
+            GameManager.Instance.rockPool.ReturnToPool(gameObject);
         }
+    }
+
+    private IEnumerator LifeCycle() {
+        yield return new WaitForSeconds(10f);
+        rb.isKinematic = true; 
+
+        Vector3 startPosition = transform.position;
+        Vector3 endPosition = startPosition + Vector3.down * 3f; 
+        float moveDuration = 2f; 
+
+        for (float t = 0; t < moveDuration; t += Time.deltaTime) {
+            float normalizedTime = t / moveDuration;
+            transform.position = Vector3.Lerp(startPosition, endPosition, normalizedTime);
+            yield return null; 
+        }
+        transform.position = endPosition;
+        rb.isKinematic = false; 
+
+        GameManager.Instance.rockPool.ReturnToPool(gameObject);
     }
 }

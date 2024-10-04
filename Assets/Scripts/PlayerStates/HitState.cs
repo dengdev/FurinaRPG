@@ -8,13 +8,9 @@ public class HitState : IPlayerState {
         this.player = player;
         if(player.playerIsDizzy == true) {
             player.GetComponent<Animator>().SetTrigger("Dizzy");
-            Debug.Log("玩家被击晕了！");
-
         } else {
             player.playerIsHIt = true;
-
             player.GetComponent<Animator>().SetTrigger("Hit");
-            Debug.Log("玩家受到普通攻击");
         }
        
     }

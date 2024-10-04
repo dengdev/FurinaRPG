@@ -7,42 +7,48 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent), typeof(CharacterStats))]
 
 public class EnemyController : MonoBehaviour, IGameOverObserver {
-    private EnemyState enemyState; // 敌人的当前状态 (巡逻、追击、守卫等)
-    private NavMeshAgent agent; // 用于路径导航的组件
-    private Animator animator; // 控制敌人动画的组件
-    private Collider coll; // 敌人的碰撞体，用于检测碰撞
-    protected CharacterStats enemyStats; // 敌人的属性数据 (生命值、攻击力等)
+    private EnemyState enemyState;
+    private NavMeshAgent agent; 
+    private Animator animator; 
+    private Collider coll; 
+    protected CharacterStats enemyStats;
+
 
     [Header("Basic Settings")]
-    public float sightRadius; // 敌人的视野范围
-    public bool isGuard; // 判断敌人是守卫模式还是巡逻模式
-    public float lookAtTime; // 敌人停止移动后观察环境的时间
-    private float movementSpeed; // 敌人的移动速度
+    public float sightRadius; 
+    public bool isGuard; 
+    public float lookAtTime; 
+    private float enemyMoveSpeed;
     private float remainLookAtTime; // 剩余的观察时间
-    protected GameObject attackTarget; // 当前攻击目标
+    protected GameObject attackTarget;
 
     [Header("Partol State")]
-    public float patrolRange; // 巡逻范围
-    private Vector3 patrolPoint; // 巡逻的目标点
-    private float lastAttackTime; // 上次攻击的时间，用于控制攻击间隔
-    private Vector3 guardPosition; // 守卫模式下敌人的初始位置
-    private Quaternion guardRotation; // 守卫模式下敌人的初始朝向
+    public float patrolRange;
+    private Vector3 patrolPoint;
+    private float lastAttackTime; 
+    private Vector3 guardPosition; 
+    private Quaternion guardRotation; 
 
     [Header("Alert Settings")]
-    public float alertTime = 3f; // 警觉时间
-    [SerializeField]private float alertTimer; // 当前的警觉计时器
+    public float alertTime = 3f; 
+    [SerializeField] private float alertTimer; 
 
-    // 控制动画状态的布尔值
+    
     bool isWalking, isChasing, isFollow, isDead;
-    bool playerDead; // 玩家是否死亡
+    bool playerIsDead; 
+    private LayerMask playerLayer;
+
+    private Collider[] detectedColliders = new Collider[4]; 
 
     void Awake() {
+        playerLayer = LayerMask.GetMask("Player");
+
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         coll = GetComponent<Collider>();
         enemyStats = GetComponent<CharacterStats>();
 
-        movementSpeed = agent.speed; // 记录初始移动速度
+        enemyMoveSpeed = agent.speed; // 记录初始移动速度
         guardPosition = transform.position; // 记录守卫初始位置
         guardRotation = transform.rotation; // 记录守卫初始朝向
         remainLookAtTime = lookAtTime; // 初始化观察时间
@@ -70,9 +76,9 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     }
 
     private void Update() {
-        isDead = enemyStats.CurrentHealth == 0; // 判断敌人是否死亡
+        isDead = enemyStats.CurrentHealth == 0;
 
-        if (!playerDead) {
+        if (!playerIsDead) {
             UpdateEnemyState(); // 切换敌人的状态
             lastAttackTime -= Time.deltaTime; // 更新攻击冷却
         }
@@ -91,14 +97,12 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         if (isDead) {
             enemyState = EnemyState.DEAD;
         } else if (PlayerDetected()) {
-            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE)
-            {
+            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE) {
                 Debug.Log(this.name + "发现玩家");
                 enemyState = EnemyState.ALERT;
                 alertTimer = alertTime; // 重置警觉计时器
             }
         } else if (enemyState == EnemyState.ALERT) {
-            // 如果玩家脱离视野范围，恢复到默认状态
             enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
         }
 
@@ -153,13 +157,12 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
 
     private void ExecutePatrolBehavior() {
         isChasing = false;
-        agent.speed = movementSpeed * 0.5f; // 巡逻时减慢速度
+        agent.speed = enemyMoveSpeed * 0.5f;
 
-        // 判断是否到达巡逻点
         if (Vector3.Distance(patrolPoint, transform.position) <= agent.stoppingDistance) {
             isWalking = false;
             if (remainLookAtTime > 0)
-                remainLookAtTime -= Time.deltaTime; // 停留一段时间后再移动到下一个巡逻点
+                remainLookAtTime -= Time.deltaTime;
             else {
                 GetNewPatrolPoint();
                 remainLookAtTime = lookAtTime;
@@ -191,7 +194,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
             if (WithinAttackRange() || WithinSkillRange()) {
                 isFollow = false;
                 agent.isStopped = true;
-                if (lastAttackTime < 0) {   
+                if (lastAttackTime < 0) {
                     lastAttackTime = enemyStats.attackData.coolDown;
                     PerformEnemyAttack(); // 执行攻击逻辑
                 }
@@ -203,70 +206,52 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         // 死亡后不会挡路
         agent.radius = 0;
         coll.enabled = false;
-        Destroy(gameObject, 2f); // 2秒后销毁敌人对象
+        Destroy(gameObject, 2f);
     }
 
-    /// <summary>
-    /// 执行敌人攻击
-    /// </summary>
-    void PerformEnemyAttack() {
-        // 判断是否触发暴击
+    private void PerformEnemyAttack() {
         enemyStats.isCritical = Random.value < enemyStats.attackData.criticalChance;
-
-        // 面向攻击目标
         transform.LookAt(attackTarget.transform);
 
         if (WithinAttackRange()) {
-            animator.SetTrigger("Attack"); // 播放攻击动画
+            animator.SetTrigger("Attack");
         }
 
         if (WithinSkillRange()) {
-            animator.SetTrigger("Skill"); // 播放技能动画
+            animator.SetTrigger("Skill");
         }
     }
 
-    /// <summary>
-    /// 判断目标是否在近战攻击范围内
-    /// </summary>
     private bool WithinAttackRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.attackRange;
     }
 
-    /// <summary>
-    /// 判断目标是否在技能攻击范围内
-    /// </summary>
     private bool WithinSkillRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.skillRange &&
             Vector3.Distance(attackTarget.transform.position, transform.position) > enemyStats.attackData.attackRange;
     }
 
-    /// <summary>
-    /// 判断是否在视野范围内发现玩家
-    /// </summary>
     private bool PlayerDetected() {
-        var colliders = Physics.OverlapSphere(transform.position, sightRadius);
+        int numColliders = Physics.OverlapSphereNonAlloc(transform.position, sightRadius, detectedColliders, playerLayer);
 
-        foreach (var target in colliders) {
-            if (target.CompareTag("Player")) {
-                attackTarget = target.gameObject;
+        for (int i = 0; i < numColliders; i++) {
+            if (detectedColliders[i].CompareTag("Player")) {
+                attackTarget = detectedColliders[i].gameObject;
                 return true;
             }
         }
+
         attackTarget = null;
         return false;
     }
 
-    /// <summary>
-    /// 获取新的巡逻点
-    /// </summary>
-    void GetNewPatrolPoint() {
+    private void GetNewPatrolPoint() {
         Vector3 randomPoint = new Vector3(Random.Range(-patrolRange, patrolRange), 0, Random.Range(-patrolRange, patrolRange));
         NavMeshHit hit;
         patrolPoint = guardPosition + randomPoint;
 
-        // 确保巡逻点在导航网格上
         if (NavMesh.SamplePosition(patrolPoint, out hit, patrolRange, 1)) {
             patrolPoint = hit.position;
         } else {
@@ -290,18 +275,17 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     /// </summary>
     public void PlayerDeadNotify() {
         animator.SetBool("Win", true);
-        playerDead = true;
+        playerIsDead = true;
         isChasing = false;
         isFollow = false;
         attackTarget = null;
     }
 
-    /// <summary>
-    /// 绘制调试辅助信息
-    /// </summary>
+
     private void OnDrawGizmosSelected() {
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, sightRadius);
+        Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, patrolRange);
 
     }
