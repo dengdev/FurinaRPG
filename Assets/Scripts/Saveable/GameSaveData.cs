@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class GameSaveData
 {
-    public List<Item> items;
-    public CharacterData_SO characterData_SO;
+    public PlayerData playerData;
 
     public string currentSceneName;
 }

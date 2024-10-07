@@ -8,8 +8,8 @@ public class SceneController : Singleton<SceneController>, ISaveable {
     public SceneFader sceneFaderPrefab;
 
     private Transform player;
-    private float fadeOutTime = 1.2f;
-    private float fadeInTime = 1.0f;
+    private float fadeOutTime = 0.4f;
+    private float fadeInTime = 0.3f;
     private string currentSceneName;
     [SerializeField] private string playerPrefabPath = "Prefabs/Player";
 
@@ -22,7 +22,9 @@ public class SceneController : Singleton<SceneController>, ISaveable {
 
     private void Start() {
         ISaveable saveable = this;
-        saveable.RegisteSaveable();
+        saveable.AutoRegisteSaveable();
+        SaveManager.Instance.Load();
+
     }
 
     public void TransitionToDestination(TransitionPoint transitionPoint) {
@@ -39,10 +41,11 @@ public class SceneController : Singleton<SceneController>, ISaveable {
 
     IEnumerator Transition(string targetSceneName, TransitionDestination.DestinationTag destinationTag) {
         destinationCache?.Clear();
-        if (SceneManager.GetActiveScene().name != targetSceneName) {
-            // 同场景传送
-            yield return SceneManager.LoadSceneAsync(targetSceneName);
 
+        if (SceneManager.GetActiveScene().name != targetSceneName) {
+            // 不同场景传送
+            yield return SceneManager.LoadSceneAsync(targetSceneName);
+            currentSceneName = targetSceneName;
             UpdateDestinationCache();
 
             TransitionDestination destination = UseTagGetDestination(destinationTag);
@@ -59,7 +62,7 @@ public class SceneController : Singleton<SceneController>, ISaveable {
             }
             SaveManager.Instance.Load();
         } else {
-            // 不同场景传送
+            // 同场景传送
             TransitionDestination destination = UseTagGetDestination(destinationTag);
             if (destination == null) { Debug.LogError("未找到匹配的传送目的地"); yield break; }
 
@@ -102,9 +105,7 @@ public class SceneController : Singleton<SceneController>, ISaveable {
     }
 
 
-
     IEnumerator LoadScene(string sceneName) {
-        //SceneFader sceneFader = ResourceManager.Instance.LoadResource<SceneFader>(sceneFaderPrefabPath);
         SceneFader fader = Instantiate(sceneFaderPrefab);
         if (!string.IsNullOrEmpty(sceneName)) {
             yield return StartCoroutine(fader.FadeOut(fadeOutTime));
@@ -132,10 +133,9 @@ public class SceneController : Singleton<SceneController>, ISaveable {
     }
 
     public GameSaveData GenerateSaveData() {
-
-        GameSaveData saveData = new GameSaveData();
-        currentSceneName = SceneManager.GetActiveScene().name;
-        saveData.currentSceneName = SceneManager.GetActiveScene().name;
+        GameSaveData saveData = new GameSaveData() {
+            currentSceneName = SceneManager.GetActiveScene().name
+        };
         return saveData;
     }
 
@@ -157,6 +157,8 @@ public class SceneController : Singleton<SceneController>, ISaveable {
     }
 
     public void TransitionToLoadScene() {
-        StartCoroutine(LoadScene(CurrentSceneName));
+        if (CurrentSceneName != null) {
+            StartCoroutine(LoadScene(CurrentSceneName));
+        }
     }
 }

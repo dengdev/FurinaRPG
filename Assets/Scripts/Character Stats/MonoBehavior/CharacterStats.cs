@@ -10,40 +10,37 @@ public class CharacterStats : MonoBehaviour {
     public event Action OnDeath;
     public event Action<int> OnGainExp;
 
-    [Header("½ÇÉ«Êı¾İ")]
-    public CharacterData_SO characterTemplateData;
+    [Header("è§’è‰²æ•°æ®")]
     public Attackdata_SO attackData;
-    public CharacterData_SO characterData;
+    public Characters characterData;
+    public PlayerData playerData;
+    public EnemyData enemyData;
 
     private Animator animator;
 
     [HideInInspector]
-    public bool isCritical; // ÊÇ·ñ±©»÷
-    public bool isAttacking; // ÊÇ·ñÔÚ¹¥»÷ÖĞ
+    public bool isCritical; // æ˜¯å¦æš´å‡»
+    public bool isAttacking; 
 
-    [Header("ÉËº¦Ìø×Ö")]
+    [Header("ä¼¤å®³è·³å­—")]
     public string damagePopupPrefabPath = "UI/DamageJumpShow";
-    [SerializeField] private GameObject damagePopupPrefab;
+    private GameObject damagePopupPrefab;
     private Canvas damageShowCanvas;
-    private Transform damageShow;//ÊµÀı»¯³öÀ´µÄÌø×Ö
+    private Transform damageShow;//å®ä¾‹åŒ–å‡ºæ¥çš„è·³å­—
 
 
     private void Awake() {
-        if (characterTemplateData != null) {
-            characterData = Instantiate(characterTemplateData);
-        }
-
         animator = GetComponent<Animator>();
 
         if (damagePopupPrefab == null) {
             damagePopupPrefab = Resources.Load<GameObject>(damagePopupPrefabPath);
             if (damagePopupPrefab == null) {
-                Debug.LogError($"Î´ÔÚÂ·¾¶ '{damagePopupPrefabPath}' ÕÒµ½ÉËº¦Ìø×ÖÔ¤ÖÆÌå");
+                Debug.LogError($"æœªåœ¨è·¯å¾„ '{damagePopupPrefabPath}' æ‰¾åˆ°ä¼¤å®³è·³å­—é¢„åˆ¶ä½“");
                 return;
             }
         }
 
-        // Í¨¹ı²éÕÒäÖÈ¾Ä£Ê½ÕÒµ½ÑªÌõ¹ÒÔØµÄ»­²¼¡£
+        // é€šè¿‡æŸ¥æ‰¾æ¸²æŸ“æ¨¡å¼æ‰¾åˆ°è¡€æ¡æŒ‚è½½çš„ç”»å¸ƒã€‚
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace) {
                 damageShowCanvas = canvas;
@@ -51,7 +48,25 @@ public class CharacterStats : MonoBehaviour {
         }
     }
 
-    #region ½ÇÉ«ÊôĞÔ
+    private void Start() {
+        if (transform.GetComponent<PlayerController>() != null) {
+
+            playerData = (PlayerData)characterData;
+
+            
+
+            if (playerData != null) {
+                GameObject.Find("PlayerHealth Canvas").transform.GetChild(0).gameObject.SetActive(true);
+            } else {
+                Debug.Log("ç©å®¶èº«ä¸Šçš„æ•°æ®ä¸ºç©ºï¼Œè¿˜æ²¡æœ‰åŠ è½½æ•°æ®");
+                Debug.Assert(false);
+            }
+        } else {
+            enemyData = (EnemyData)characterData;
+        }
+    }
+
+    #region è§’è‰²å±æ€§
     public int MaxHealth {
         get { return characterData != null ? characterData.maxHealth : 0; }
         set { characterData.maxHealth = value; }
@@ -72,8 +87,8 @@ public class CharacterStats : MonoBehaviour {
         set { characterData.currentDefence = value; }
     }
     #endregion
-   
-    #region ½ÇÉ«Õ½¶·Âß¼­
+
+    #region è§’è‰²æˆ˜æ–—é€»è¾‘
     public void TakeCharacterDamage(CharacterStats attacker, CharacterStats defender) {
         if (attacker == null || defender == null) return;
 
@@ -105,13 +120,15 @@ public class CharacterStats : MonoBehaviour {
         defender.CurrentHealth = Mathf.Max(defender.CurrentHealth - damage, 0);
         if (defender.CurrentHealth < 0.01) {
             defender.OnDeath?.Invoke();
-            PlayerGainExp(defender.characterData.killPoint);
+            if (defender.GetComponent<EnemyController>() != null) {
+                PlayerGainExp(defender.enemyData.killPoint);
+            }
         }
         OnHealthChanged?.Invoke(defender.CurrentHealth, defender.MaxHealth);
     }
 
     private void PlayerGainExp(int exp) {
-        GameManager.Instance.playerStats.characterData.UpdateExp(exp); // Íæ¼Ò»ñµÃ»÷É±¾­Ñé
+        GameManager.Instance.playerStats.playerData.UpdateExp(exp);
         GameManager.Instance.playerStats.OnGainExp?.Invoke(exp);
     }
 
@@ -119,24 +136,22 @@ public class CharacterStats : MonoBehaviour {
         damageShow = Instantiate(damagePopupPrefab, damageShowCanvas.transform).transform;
 
         float randomRange = 0.8f;
-        // Éú³ÉËæ»úÆ«ÒÆ
         Vector3 randomOffset = new Vector3(
             UnityEngine.Random.Range(-randomRange, randomRange),
-            UnityEngine.Random.Range(0.8f, 1.4f), // Ö»ÔÚYÖáÉÏ²úÉúÕıÆ«ÒÆ
+            UnityEngine.Random.Range(0.8f, 1.4f), 
             UnityEngine.Random.Range(-randomRange, randomRange)
         );
 
         damageShow.position = defender.transform.position + randomOffset;
-        damageShow.forward = Camera.main.transform.forward; // Ê¹Êı×ÖÊ¼ÖÕÃæÏòÍæ¼Ò
+        damageShow.forward = Camera.main.transform.forward; 
 
         TextMeshProUGUI _text = damageShow.GetComponent<TextMeshProUGUI>();
         if (_text != null) {
             _text.text = damage.ToString();
         } else {
-            Debug.LogError("Damage PopupÃ»ÓĞÕÒµ½TextMeshProUGUI×é¼ş");
+            Debug.LogError("Damage Popupæ²¡æœ‰æ‰¾åˆ°TextMeshProUGUIç»„ä»¶");
         }
 
-        // Æô¶¯Ğ­³Ì´¦ÀíÒÆ¶¯ºÍÏûÊ§
         StartCoroutine(MoveAndFade(damageShow));
     }
 
@@ -169,33 +184,26 @@ public class CharacterStats : MonoBehaviour {
     }
 
     private IEnumerator MoveAndFade(Transform damageShow) {
-        float duration = 1.5f; // ×Ü³ÖĞøÊ±¼ä
+        float duration = 1.5f;
         float elapsed = 0f;
 
-        // ÆğÊ¼Î»ÖÃ
         Vector3 startPos = damageShow.position;
 
-        // ¿ØÖÆË®Æ½ºÍ´¹Ö±Æ«ÒÆ
-        float height = 0.5f; // ×î´ó¸ß¶È
-        float distance = 2.5f; // Ë®Æ½ÒÆ¶¯µÄ¾àÀë
+        float height = 0.5f; 
+        float distance = 2.5f; 
 
-
-        // µ­³öĞ§¹û
         TextMeshProUGUI textComponent = damageShow.GetComponent<TextMeshProUGUI>();
         Color originalColor = textComponent.color;
 
-        // ÒÆ¶¯
         while (elapsed < duration) {
-            // ¼ÆËãÅ×ÎïÏßÔË¶¯
             float t = elapsed / duration;
-            Vector3 targetPos = startPos + Vector3.right * distance * t + Vector3.up * height * Mathf.Sin(t * Mathf.PI); // Í¨¹ıSinº¯ÊıÄ£ÄâÅ×ÎïÏß
+            Vector3 targetPos = startPos + Vector3.right * distance * t + Vector3.up * height * Mathf.Sin(t * Mathf.PI); 
             textComponent.color = new Color(originalColor.r, originalColor.g, originalColor.b, Mathf.Lerp(1, 0, elapsed / duration));
             damageShow.position = targetPos;
 
             elapsed += Time.deltaTime;
-            yield return null; // µÈ´ıÏÂÒ»Ö¡
+            yield return null; 
         }
-        // Ïú»Ù¶ÔÏó
         Destroy(damageShow.gameObject);
     }
     #endregion

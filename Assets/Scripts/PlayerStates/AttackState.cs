@@ -17,7 +17,7 @@ public class AttackState : IPlayerState {
 
     public void Enter(PlayerController player) {
         this.player = player;
-        player.playerStats.isCritical = Random.value < player.playerStats.attackData.criticalChance;
+        player.controllerPlayerStats.isCritical = Random.value < player.controllerPlayerStats.attackData.criticalChance;
         player.playerIsAttacking = true; 
         player.animator.SetTrigger("Attack");
         timer = ATTACK_TIME;
@@ -74,6 +74,6 @@ public class AttackState : IPlayerState {
     }
 
     private void HandleEnemyAttack(CharacterStats targetStats) {
-        targetStats.TakeCharacterDamage(player.playerStats, targetStats);
+        targetStats.TakeCharacterDamage(player.controllerPlayerStats, targetStats);
     }
 }

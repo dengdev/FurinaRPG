@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameManager : Singleton<GameManager>,ISaveable {
+public class GameManager : Singleton<GameManager>, ISaveable {
     public CharacterStats playerStats;
+    public PlayerData playerData;
 
     private List<IGameOverObserver> endGameObservers = new List<IGameOverObserver>();
 
@@ -12,21 +13,23 @@ public class GameManager : Singleton<GameManager>,ISaveable {
 
 
     protected override void Awake() {
-        
         base.Awake();
         DontDestroyOnLoad(this.gameObject);
     }
+
     private void Start() {
         ISaveable saveable = this;
-        saveable.RegisteSaveable();
+        saveable.AutoRegisteSaveable();
+    }
+
+    private void Update() {
+
     }
 
     // 第一次注册时数据未加载，第二注册才成功加载数据
     public void RegisterPlayer(CharacterStats player) {
         playerStats = player;
-        if (playerStats.characterData != null) {
-            GameObject.Find("PlayerHealth Canvas").transform.GetChild(0).gameObject.SetActive(true);
-        }
+
     }
 
     public void AddObserver(IGameOverObserver observer) {
@@ -54,21 +57,19 @@ public class GameManager : Singleton<GameManager>,ISaveable {
     }
 
     public GameSaveData GenerateSaveData() {
-        if (playerStats == null || playerStats.characterData == null) {
-            Debug.LogError("玩家统计信息或角色数据未初始化。");
+        if (playerStats == null || playerStats.playerData == null) {
+            Debug.LogWarning ("生成保存数据时，玩家统计信息或角色数据未初始化。");
             return null; // 或者返回一个默认值
         }
-
+       
         GameSaveData saveData = new GameSaveData {
-            characterData_SO = playerStats.characterData,
-            items = playerStats.characterData.items
+            playerData = this.playerData,
         };
         return saveData;
     }
+    
 
     public void RestoreGameData(GameSaveData gameSaveData) {
-        playerStats.characterData=gameSaveData.characterData_SO;
-        playerStats.characterData.items=gameSaveData.items;
-
+        playerData = gameSaveData.playerData;
     }
 }

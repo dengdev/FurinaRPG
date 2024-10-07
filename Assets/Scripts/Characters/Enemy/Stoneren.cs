@@ -13,6 +13,8 @@ public class Stoneren : EnemyController {
 
     private void Start() {
     }
+    private void Update() {
+    }
 
     // Animation Event
     public void KickOff() {
@@ -25,7 +27,7 @@ public class Stoneren : EnemyController {
                 player.KnockbackPlayer(knockbackDirection * kickBackForce);
                 player.playerIsDizzy = true;
                 player.ChangeState(new HitState());
-                targetStats.TakeCharacterDamage(enemyStats, targetStats);
+                targetStats.TakeCharacterDamage(enemyData, targetStats);
             }
         }
     }

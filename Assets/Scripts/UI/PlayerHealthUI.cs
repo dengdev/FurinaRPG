@@ -11,29 +11,31 @@ public class PlayerHealthUI : MonoBehaviour {
     private Image _HPSlider;
     private Image _EXPSlider;
 
-    private CharacterStats playerStats;
-
+    private bool isSubscribed = false;
+    private  PlayerData _PlayerData;
     private void Awake() {
         InitializeUIComponents();
     }
 
     private void OnEnable() {
-        PlayerStats_OnHealthChanged(GameManager.Instance.playerStats.CurrentHealth, GameManager.Instance.playerStats.MaxHealth);
-        PlayerStats_OnGainExp(0);
+        if (!isSubscribed) {
+            GameManager.Instance.playerStats.OnHealthChanged += PlayerStats_OnHealthChanged;
+            GameManager.Instance.playerStats.OnGainExp += PlayerStats_OnGainExp;
+            isSubscribed = true;
+        }
 
-        GameManager.Instance.playerStats.OnHealthChanged += PlayerStats_OnHealthChanged;
-        GameManager.Instance.playerStats.OnGainExp += PlayerStats_OnGainExp;
+        // 更新玩家数据
+        _PlayerData = GameManager.Instance.playerData;
+        PlayerStats_OnHealthChanged(_PlayerData.currentHealth, _PlayerData.maxHealth);
+        PlayerStats_OnGainExp(0);
         UpdatePlayerLevel();
     }
 
-
     private void OnDisable() {
-        if (GameManager.Instance != null && GameManager.Instance.playerStats != null) {
+        if (GameManager.Instance != null && GameManager.Instance.playerStats != null && isSubscribed) {
             GameManager.Instance.playerStats.OnGainExp -= PlayerStats_OnGainExp;
             GameManager.Instance.playerStats.OnHealthChanged -= PlayerStats_OnHealthChanged;
-            Debug.Log($"确认游戏管理者中的玩家数据不为空");
-        } else {
-            Debug.Log($"游戏管理者或玩家数据为空: {GameManager.Instance == null}, {GameManager.Instance?.playerStats == null}");
+            isSubscribed = false; // 更新订阅状态
         }
     }
 
@@ -53,8 +55,8 @@ public class PlayerHealthUI : MonoBehaviour {
     }
 
     private void PlayerStats_OnGainExp(int exp) {
-        float currentExp = GameManager.Instance.playerStats.characterData.currentExp;
-        float baseExp = GameManager.Instance.playerStats.characterData.baseExp;
+        float currentExp = _PlayerData.currentExp;
+        float baseExp = _PlayerData.baseExp;
         float eXPPercent = currentExp / baseExp;
         StartCoroutine(ChangeFillAmount(_EXPSlider, eXPPercent, 0.5f, true)); // 0.5秒内变化
         
@@ -75,7 +77,7 @@ public class PlayerHealthUI : MonoBehaviour {
             time = 0;
             // 经验达到上限后更新等级和血量
             UpdatePlayerLevel();
-            PlayerStats_OnHealthChanged(GameManager.Instance.playerStats.CurrentHealth, GameManager.Instance.playerStats.MaxHealth);
+            PlayerStats_OnHealthChanged(_PlayerData.currentHealth, GameManager.Instance.playerStats.playerData.maxHealth);
 
             while (time < duration) {
                 time += Time.deltaTime;
@@ -94,6 +96,6 @@ public class PlayerHealthUI : MonoBehaviour {
     }
 
     private void UpdatePlayerLevel() {
-        _LevelText.text = "Lv:" + GameManager.Instance.playerStats.characterData.currentLevel.ToString("00");
+        _LevelText.text = "Lv:" + _PlayerData.currentLevel.ToString("00");
     }
 }

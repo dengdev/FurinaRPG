@@ -5,13 +5,22 @@ using Newtonsoft.Json;
 using System.IO;
 using System;
 using System.Text;
+using System.Collections.ObjectModel;
 
 public class ItemList {
     public List<Item> items;
 }
 
+public class EnemyDataList {
+    public List<EnemyData> enemies;
+}
+
 public class SaveManager : Singleton<SaveManager> {
-    public Dictionary<int, Item> allItems; // 使用字典存储全局物品列表
+    public ReadOnlyDictionary<int, Item> allItems; // 使用字典存储全局物品列表
+    public ReadOnlyDictionary<string, EnemyData> allEnemyData;
+
+    private Dictionary<int, Item> itemDictionary; // 私有字典存储所有物品
+    private Dictionary<string, EnemyData> enemyDictionary; // 私有字典存储所有敌人
 
     private string jsonFolder;
     private List<ISaveable> saveableList = new List<ISaveable>();
@@ -22,21 +31,27 @@ public class SaveManager : Singleton<SaveManager> {
         base.Awake();
         jsonFolder = Application.persistentDataPath + "/GameSaveData/";
         DontDestroyOnLoad(this.gameObject);
+
+        itemDictionary = new Dictionary<int, Item>();
+        enemyDictionary = new Dictionary<string, EnemyData>();
+
+        allItems = new ReadOnlyDictionary<int, Item>(itemDictionary);
+        allEnemyData = new ReadOnlyDictionary<string, EnemyData>(enemyDictionary);
     }
     private void OnEnable() {
 
     }
 
     private void Start() {
-        LoadAllItems(); // 在游戏开始时加载所有物品信息
-
-
+        LoadAllItems();
+        LoadAllEnemies();
     }
     private void OnDisable() {
 
     }
 
     public void OnStartNewGame() {
+
         string resultPath = jsonFolder + "data.sav";
 
         if (File.Exists(resultPath)) {
@@ -49,9 +64,6 @@ public class SaveManager : Singleton<SaveManager> {
         saveableList.Add(saveable);
     }
 
-    /// <summary>
-    /// 保存特定的数据
-    /// </summary>
     public void Save() {
         try {
             saveDataDictionary.Clear();
@@ -66,14 +78,12 @@ public class SaveManager : Singleton<SaveManager> {
                 Directory.CreateDirectory(jsonFolder);
             }
             File.WriteAllText(resultPath, jsonData);
+            Debug.Log("保存成功");
         } catch (Exception ex) {
             Debug.LogError($"保存失败: {ex.Message}");
         }
     }
 
-    /// <summary>
-    /// 从已保存的数据中加载
-    /// </summary>
     public void Load() {
         try {
             string resultPath = jsonFolder + "data.sav";
@@ -87,29 +97,20 @@ public class SaveManager : Singleton<SaveManager> {
             foreach (ISaveable saveable in saveableList) {
                 saveable.RestoreGameData(jsonData[saveable.GetType().Name]);
             }
+            Debug.Log("加载成功");
         } catch (Exception ex) {
             Debug.LogError($"加载失败: {ex.Message}");
         }
     }
 
-
-
-
-
     private void Update() {
-        if (Input.GetKeyDown(KeyCode.Escape)) {
-            Debug.Log("按下Esc返回到主菜单");
-            SceneController.Instance.TransitionToMainMenuScene();
-        }
 
         if (Input.GetKeyDown(KeyCode.R)) {
-
             Debug.Log("按下R保存玩家数据");
             Save();
         }
 
         if (Input.GetKeyDown(KeyCode.L)) {
-
             Debug.Log("按下L读取玩家数据");
             Load();
         }
@@ -117,17 +118,29 @@ public class SaveManager : Singleton<SaveManager> {
 
     private void LoadAllItems() {
         string path = Path.Combine(Application.dataPath, "Resources/Data/items.json");
-        if (File.Exists(path)) {
 
+        if (File.Exists(path)) {
             string stringData = File.ReadAllText(path, Encoding.UTF8);
-            Debug.Log(stringData);
             ItemList itemList = JsonConvert.DeserializeObject<ItemList>(stringData, new ItemConverter());
-            allItems = new Dictionary<int, Item>();
 
             foreach (Item item in itemList.items) {
-                allItems[item.item_ID] = item;
+                itemDictionary[item.item_ID] = item;
             }
-            Debug.Log("所有物品数据加载成功。");
+        } else {
+            Debug.LogError("未能找到 JSON 文件: " + path);
+        }
+    }
+
+    private void LoadAllEnemies() {
+        string path = Path.Combine(Application.dataPath, "Resources/Data/enemies.json");
+
+        if (File.Exists(path)) {
+            string stringData = File.ReadAllText(path, Encoding.UTF8);
+            EnemyDataList enemyDataList = JsonConvert.DeserializeObject<EnemyDataList>(stringData);
+
+            foreach (EnemyData enemy in enemyDataList.enemies) {
+                enemyDictionary[enemy.characterName] = enemy;
+            }
         } else {
             Debug.LogError("未能找到 JSON 文件: " + path);
         }
@@ -143,10 +156,14 @@ public class SaveManager : Singleton<SaveManager> {
         }
     }
 
-    public void AddItem(Item item) {
-        if (!allItems.ContainsKey(item.item_ID)) {
-            allItems[item.item_ID] = item;
-            //SaveAllItems(); //实现保存所有物品到 JSON 文件的逻辑
+    public EnemyData GetEnemy(string enemyName) {
+
+        if (allEnemyData.TryGetValue(enemyName, out EnemyData enemy)) {
+            EnemyData enemyCopy = new EnemyData(enemy.maxHealth, enemy.currentHealth, enemy.baseDefence, enemy.currentDefence, enemy.killPoint);
+            return enemyCopy; // 深度复制
+        } else {
+            Debug.LogWarning($"此敌人 '{enemyName}' 为无效名称");
+            return null;
         }
     }
 }

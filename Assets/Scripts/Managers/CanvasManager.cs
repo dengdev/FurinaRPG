@@ -4,52 +4,66 @@ using UnityEngine;
 
 public class CanvasManager : Singleton<CanvasManager>
 {
-    [SerializeField] private List<GameObject> canvases;
+   [SerializeField] private Dictionary<string, GameObject> canvasesDict = new Dictionary<string, GameObject>();
+    private int openCanvasCount = 0;
 
     protected override void Awake() {
         base.Awake();
         DontDestroyOnLoad(gameObject);
         InitializeCanvases();
     }
+    private void Start() {
+        
+    }
 
     private void InitializeCanvases() {
-        canvases.Clear(); // 清空现有列表
         GameObject[] canvasPrefabs = Resources.LoadAll<GameObject>("Canvases");
+        canvasesDict.Clear();
+
         foreach (GameObject prefab in canvasPrefabs) {
             GameObject canvasInstance = Instantiate(prefab);
+            canvasInstance.name = prefab.name;
             canvasInstance.SetActive(false);
-            canvases.Add(canvasInstance);
+            DontDestroyOnLoad(canvasInstance);
+            canvasesDict.Add(prefab.name, canvasInstance);
         }
     }
 
    private  void Update() {
-        // 示例：按 B 打开/关闭背包
         if (Input.GetKeyDown(KeyCode.B)) {
             ToggleCanvas("InventoryCanvas");
         }
 
-        // 示例：按 Esc 打开/关闭菜单
         if (Input.GetKeyDown(KeyCode.Escape)) {
             ToggleCanvas("MenuCanvas");
         }
     }
 
     public void ToggleCanvas(string canvasName) {
-        GameObject canvas = canvases.Find(c => c.name == canvasName + "(Clone)");
-        if (canvas != null) {
+        if (canvasesDict.TryGetValue(canvasName, out GameObject canvas)) {
             bool isActive = canvas.activeSelf;
             canvas.SetActive(!isActive);
-            Time.timeScale = isActive ? 1 : 0; // 暂停或恢复游戏
+
+            if (isActive) {
+                openCanvasCount = Mathf.Max(0, openCanvasCount - 1);
+            } else {
+                openCanvasCount++;
+            }
+
+            // 如果有任何画布打开，暂停游戏；否则恢复游戏
+            Time.timeScale = openCanvasCount > 0 ? 0 : 1;
         } else {
-            Debug.Log($"未找到 Canvas: {canvasName}(Clone)");
+            Debug.LogWarning($"未找到 Canvas: {canvasName}");
         }
     }
 
      public void CloseCanvas(string canvasName) {
-        GameObject canvas = canvases.Find(c => c.name == canvasName);
-        if (canvas != null) {
+        if (canvasesDict.TryGetValue(canvasName, out GameObject canvas) && canvas.activeSelf) {
             canvas.SetActive(false);
-            Time.timeScale = 1; // 恢复游戏
+            openCanvasCount = Mathf.Max(0, openCanvasCount - 1);
+            Time.timeScale = openCanvasCount > 0 ? 0 : 1;
+        } else {
+            Debug.LogWarning($"未找到 Canvas 或 Canvas 已经关闭: {canvasName}");
         }
     }
 }

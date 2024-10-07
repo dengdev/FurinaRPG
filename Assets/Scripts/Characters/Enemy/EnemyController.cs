@@ -11,7 +11,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     private NavMeshAgent agent; 
     private Animator animator; 
     private Collider coll; 
-    protected CharacterStats enemyStats;
+    protected CharacterStats enemyData;
 
 
     [Header("Basic Settings")]
@@ -46,7 +46,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         coll = GetComponent<Collider>();
-        enemyStats = GetComponent<CharacterStats>();
+        enemyData = GetComponent<CharacterStats>();
 
         enemyMoveSpeed = agent.speed; // 记录初始移动速度
         guardPosition = transform.position; // 记录守卫初始位置
@@ -76,7 +76,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     }
 
     private void Update() {
-        isDead = enemyStats.CurrentHealth == 0;
+        isDead = enemyData.CurrentHealth == 0;
 
         if (!playerIsDead) {
             UpdateEnemyState(); // 切换敌人的状态
@@ -195,7 +195,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
                 isFollow = false;
                 agent.isStopped = true;
                 if (lastAttackTime < 0) {
-                    lastAttackTime = enemyStats.attackData.coolDown;
+                    lastAttackTime = enemyData.attackData.coolDown;
                     PerformEnemyAttack(); // 执行攻击逻辑
                 }
             }
@@ -210,7 +210,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     }
 
     private void PerformEnemyAttack() {
-        enemyStats.isCritical = Random.value < enemyStats.attackData.criticalChance;
+        enemyData.isCritical = Random.value < enemyData.attackData.criticalChance;
         transform.LookAt(attackTarget.transform);
 
         if (WithinAttackRange()) {
@@ -224,13 +224,13 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
 
     private bool WithinAttackRange() {
         return attackTarget != null &&
-            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.attackRange;
+            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyData.attackData.attackRange;
     }
 
     private bool WithinSkillRange() {
         return attackTarget != null &&
-            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyStats.attackData.skillRange &&
-            Vector3.Distance(attackTarget.transform.position, transform.position) > enemyStats.attackData.attackRange;
+            Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyData.attackData.skillRange &&
+            Vector3.Distance(attackTarget.transform.position, transform.position) > enemyData.attackData.attackRange;
     }
 
     private bool PlayerDetected() {
@@ -266,7 +266,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         // 攻击的时候要判断玩家是否在攻击范围内
         if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
             CharacterStats targetStats = attackTarget.GetComponent<CharacterStats>();
-            targetStats.TakeCharacterDamage(enemyStats, targetStats); // 执行伤害
+            targetStats.TakeCharacterDamage(enemyData, targetStats); // 执行伤害
         }
     }
 

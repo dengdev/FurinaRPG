@@ -20,7 +20,7 @@ public class Shouren : EnemyController {
                 player.KnockbackPlayer(GrapDirection * GrapForce);
                 player.playerIsDizzy = true;
                 player.ChangeState(new HitState());
-                targetStats.TakeCharacterDamage(enemyStats, targetStats);
+                targetStats.TakeCharacterDamage(enemyData, targetStats);
             }
         }
     }

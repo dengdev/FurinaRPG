@@ -1,0 +1,36 @@
+{
+    "enemies": [
+        {
+            "characterName": "石头人",
+            "maxHealth": 200,
+            "currentHealth": 200,
+            "baseDefence": 6,
+            "currentDefence": 6,
+            "killPoint": 30
+        },
+        {
+            "characterName": "兽人",
+            "maxHealth": 120,
+            "currentHealth": 120,
+            "baseDefence": 4,
+            "currentDefence": 4,
+            "killPoint": 25
+        },
+        {
+            "characterName": "刺猬",
+            "maxHealth": 50,
+            "currentHealth": 50,
+            "baseDefence": 3,
+            "currentDefence": 3,
+            "killPoint": 20
+        },
+        {
+            "characterName": "史莱姆",
+            "maxHealth": 45,
+            "currentHealth": 45,
+            "baseDefence": 1,
+            "currentDefence": 1,
+            "killPoint": 10
+        }
+    ]
+}

@@ -11,6 +11,5 @@ public class SaveButton : MonoBehaviour {
 
     private void SaveGame() {
         SaveManager.Instance.Save();
-        Debug.Log("”Œœ∑“—±£¥Ê£°");
     }
 }

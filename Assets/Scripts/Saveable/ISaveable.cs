@@ -6,12 +6,12 @@ using UnityEngine;
 /// 所有需要保存的内容需要继承该接口
 /// </summary>
 public interface ISaveable {
-    // 继承该接口后自动注册到SaveManager，由其Manager统一进行保存操作
-    void RegisteSaveable() {
+    // 自动注册到 SaveManager 以进行统一保存操作
+    public void AutoRegisteSaveable() {
         SaveManager.Instance.RegisterSaveable(this);
     }
 
-    GameSaveData GenerateSaveData();
+    public GameSaveData GenerateSaveData();
 
-    void RestoreGameData(GameSaveData gameSaveData);
+    public void RestoreGameData(GameSaveData gameSaveData);
 }

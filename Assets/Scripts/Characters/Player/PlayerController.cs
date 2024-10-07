@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour {
     [Header("角色状态")]
     private float walkSpeed = 4f;
     private float runSpeed = 8f;
-    public float playerJumpHeight = 2f;
+    public float playerJumpHeight = 6f;
     public float currentMoveSpeed;
     public bool isGround;
     public bool playerIsAttacking;
@@ -18,8 +18,6 @@ public class PlayerController : MonoBehaviour {
     public float jumpVelocity;
     public bool isRunning = false;
     public Vector3 moveDirection = Vector3.zero;
-
-    [SerializeField] public List<Item> items;
 
     public float WalkSpeed {
         get { return walkSpeed; }
@@ -39,53 +37,61 @@ public class PlayerController : MonoBehaviour {
     public Transform cameraTransform;
     public CharacterController characterController;
     public Animator animator;
-    public CharacterStats playerStats;
+    public CharacterStats controllerPlayerStats;
     private IPlayerState currentState;
+
 
     private void Awake() {
         animator = GetComponent<Animator>();
-        playerStats = GetComponent<CharacterStats>();
+        controllerPlayerStats = GetComponent<CharacterStats>();
         cameraTransform = Camera.main.transform;
         characterController = GetComponent<CharacterController>();
-
     }
 
     private void OnEnable() {
         Debug.Log("玩家控制器试图注册");
-        GameManager.Instance.RegisterPlayer(playerStats);
+        GameManager.Instance.RegisterPlayer(controllerPlayerStats);
     }
 
-    void Start() {
+    private void Start() {
         Debug.Log("玩家控制器加载玩家数据,并且试图再次注册");
         SaveManager.Instance.Load();
-        GameManager.Instance.RegisterPlayer(playerStats);
-        
+        GameManager.Instance.RegisterPlayer(controllerPlayerStats);
+
+        if (GameManager.Instance.playerData == null) {
+            GameManager.Instance.playerData = new PlayerData(
+                    currentLevel: 1,
+                    maxLevel: 20,
+                    baseExp: 80,
+                    currentExp: 0,
+                    levelBuff: 0.1f,
+                    maxHealth: 100,
+                    currentHealth: 100,
+                    baseDefence: 2,
+                    currentDefence: 2
+                    );
+            Debug.Log("游戏管理员的玩家统计没有数据，于是初始化数据");
+        }
+        controllerPlayerStats.characterData = GameManager.Instance.playerData;
+
         isGround = true;
         ChangeState(new IdleState());
-
     }
+
 
     void Update() {
         if (Time.timeScale == 0) return;
         currentState?.Update();
 
-        if (playerStats.CurrentHealth <= 0 && currentState is not DeathState) {
+        if (controllerPlayerStats.CurrentHealth <= 0 && currentState is not DeathState) {
             ChangeState(new DeathState()); // 切换到死亡状态
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.F)) {
-            Debug.Log($"按下F键试图获得ID为4的物品，名字是{SaveManager.Instance.allItems[4].item_Name}");
-
-            if (playerStats.characterData.items == null) {
-                playerStats.characterData.items=GameManager.Instance.playerStats.characterData.items;
-                Debug.Log("玩家的背包为空");
-                playerStats.characterData.items = new List<Item>();
-            }
-            playerStats.characterData.items.Add(SaveManager.Instance.allItems[4]);
-            Debug.Log("新游戏，添加1号和4号物品");
-            GameManager.Instance.playerStats.characterData.items.Add(SaveManager.Instance.allItems[1]);
-
+            Debug.Log("按下了F键");
+            GameManager.Instance.playerData.items.Add(SaveManager.Instance.allItems[1]);
+            GameManager.Instance.playerData.items.Add(SaveManager.Instance.allItems[2]);
         }
 
         if (knockbackTimer > 0) {

@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[SerializeField]
 public  class Item {
     public int item_ID; // ÐòºÅ
     public string item_Name; // Ãû×Ö

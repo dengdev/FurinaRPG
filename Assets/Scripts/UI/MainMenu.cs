@@ -26,7 +26,7 @@ public class MainMenu : MonoBehaviour {
     }
 
     private void StartGame(PlayableDirector ueslessObj) {
-        PlayerPrefs.DeleteAll();
+        GameManager.Instance.playerData = null;
         SceneController.Instance.TransitionToFirstScene();
     }
 
