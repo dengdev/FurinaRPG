@@ -61,6 +61,7 @@ public class Rock : MonoBehaviour {
                 break;
         }
     }
+
     private void HandlePlayerCollision(Collision collision) {
 
         if (collision.gameObject.CompareTag("Player")) {

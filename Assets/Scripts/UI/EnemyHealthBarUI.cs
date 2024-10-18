@@ -3,22 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class EnemyHealthBarUI : MonoBehaviour {
-    [Header("UI设置")]
-    public string healthBarUIPrefabPath = "UI/HealthBarUI";
-    public bool isUIAlwaysVisible;
+    [Header("敌人血条设置")]
+    public bool isAlwaysShow;
+    public float showTime = 2.0f;
+    public float changeTime = 0.9f;
 
-    private float showUITime; 
-    private float uIVisibleTime = 2.0f;
-    private Transform healthBarPointAtEnemyHead; // 血条挂载点（在敌人头顶）
-    private Transform uiBarTransform; // UI对象的Transform
-    private Image healthSlider; // 血条填充条
-    private Transform mainCameraTransform; // 主相机的Transform
-    private CharacterStats enemyCurrentStats; // 敌人的状态信息
+    private float showTimer;
+    private Transform hpBarPointAtEnemyHead;
+    private GameObject EnemyHPbar;
+    private Image changeHP;
+    private Image currentHP;
+    private Transform mainCameraTransform;
+    private CharacterStats enemStats_HPBar;
 
-    [SerializeField] private GameObject healthUIPrefab; // 血条预制体
-
+    private ObjectPool enemyHPPool;
 
     private void Awake() {
         InitializeHealthBar();
@@ -26,90 +27,101 @@ public class EnemyHealthBarUI : MonoBehaviour {
 
     private void OnEnable() {
         mainCameraTransform = Camera.main.transform;
-        // 订阅血量变化事件
-        if (enemyCurrentStats != null) {
-            enemyCurrentStats.OnHealthChanged += UpdateHealthBarUI;
-            enemyCurrentStats.OnDeath += HideHealthBarUI;
+
+        if (enemStats_HPBar != null) {
+            enemStats_HPBar.OnHealthChanged += UpdateHealthBarUI;
+            enemStats_HPBar.OnDeath += HideHealthBarUI;
+        }
+    }
+
+    private void Start() {
+        if (enemStats_HPBar != null) {
+            currentHP.fillAmount = enemStats_HPBar.CurrentHealth / enemStats_HPBar.MaxHealth;
+            changeHP.fillAmount = currentHP.fillAmount;
         }
     }
 
     private void OnDisable() {
-        if (enemyCurrentStats != null) {
-            enemyCurrentStats.OnHealthChanged -= UpdateHealthBarUI;
-            enemyCurrentStats.OnDeath -= HideHealthBarUI;
+        if (enemStats_HPBar != null) {
+            enemStats_HPBar.OnHealthChanged -= UpdateHealthBarUI;
+            enemStats_HPBar.OnDeath -= HideHealthBarUI;
         }
     }
+
     private void LateUpdate() {
-        if (uiBarTransform != null) {
+        if (EnemyHPbar != null) {
             UpdateUIPosition();
             AutoHideUI();
         }
     }
 
     private void InitializeHealthBar() {
-        enemyCurrentStats = GetComponent<CharacterStats>();
+        enemStats_HPBar = GetComponent<CharacterStats>();
 
-        healthBarPointAtEnemyHead = transform.Find("HealthBar Point");
-        if (healthBarPointAtEnemyHead == null) {
+        hpBarPointAtEnemyHead = transform.Find("HealthBar Point");
+        if (hpBarPointAtEnemyHead == null) {
             Debug.LogError("未找到敌人头顶的 'HealthBar Point' 节点: " + gameObject.name);
             return;
         }
 
-        if (healthUIPrefab == null) {
-            healthUIPrefab = Resources.Load<GameObject>(healthBarUIPrefabPath);
-            if (healthUIPrefab == null) {
-                Debug.LogError($"未在路径 '{healthBarUIPrefabPath}' 找到血条预制体");
-                return;
-            }
-        }
+        GameObject healthUIPrefab = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/UI/EnemyHPBar");
 
         // 通过查找渲染模式找到血条挂载的画布。
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
-            if (canvas.renderMode == RenderMode.WorldSpace && uiBarTransform == null) {
-                uiBarTransform = Instantiate(healthUIPrefab, canvas.transform).transform;
-                healthSlider = uiBarTransform.GetChild(0).GetComponent<Image>();
-                uiBarTransform.gameObject.SetActive(isUIAlwaysVisible);
-            }
-        }
+            if (canvas.renderMode == RenderMode.WorldSpace) {
 
-        if (enemyCurrentStats != null) {
-            UpdateHealthBarUI(enemyCurrentStats.CurrentHealth, enemyCurrentStats.MaxHealth);
+                if (GameManager.Instance.enemyHPPool == null) {
+                    GameManager.Instance.enemyHPPool = new ObjectPool(healthUIPrefab, 5, 20, canvas.transform);
+                }
+
+                enemyHPPool = GameManager.Instance.enemyHPPool;
+                EnemyHPbar = enemyHPPool.GetFromPool();
+                changeHP = EnemyHPbar.transform.GetChild(0).GetComponent<Image>();
+                currentHP = EnemyHPbar.transform.GetChild(1).GetComponent<Image>();
+                EnemyHPbar.SetActive(isAlwaysShow);
+            }
         }
     }
 
     private void UpdateUIPosition() {
-        uiBarTransform.position = healthBarPointAtEnemyHead.position;
-        uiBarTransform.forward = -mainCameraTransform.forward; // 使血条始终面向玩家
+        EnemyHPbar.transform.position = hpBarPointAtEnemyHead.position;
+        EnemyHPbar.transform.forward = mainCameraTransform.forward;
     }
 
     private void AutoHideUI() {
-        if (showUITime <= 0 && !isUIAlwaysVisible) {
-            uiBarTransform.gameObject.SetActive(false);
+        if (showTimer <= 0 && !isAlwaysShow) {
+            EnemyHPbar.SetActive(false);
         } else {
-            showUITime -= Time.deltaTime;
+            showTimer -= Time.deltaTime;
         }
     }
 
     private void UpdateHealthBarUI(int currentHealth, int maxHealth) {
-        if (uiBarTransform == null || healthSlider == null) {
-            Debug.LogWarning("UI Bar或Health Slider未初始化");
-            return;
-        }
+        currentHP.fillAmount = (float)currentHealth / maxHealth;
 
-        // 更新血条显示
-        float sliderPercent = (float)currentHealth / maxHealth;
-        healthSlider.fillAmount = sliderPercent;
-
-        // 如果当前血量大于0，显示血条
         if (currentHealth > 0) {
-            uiBarTransform.gameObject.SetActive(true);
-            showUITime = uIVisibleTime; // 重置显示时间
+            EnemyHPbar.SetActive(true);
+            showTimer = showTime;
         }
-    }
-    private void HideHealthBarUI() {
-        if (uiBarTransform != null) {
-            Destroy(uiBarTransform.gameObject); // 销毁血条UI
-        }
+
+        changeHP.DOFillAmount(currentHP.fillAmount, changeTime).SetEase(Ease.OutQuad);
     }
 
+    private void HideHealthBarUI() {
+        enemyHPPool.ReturnToPool(EnemyHPbar);
+    }
+
+    // 使用 DOTween 替代协程进行血条填充动画。减少使用协程所带来的开销
+    private IEnumerator ChangeHealthBarFillAmount(Image slider, float targetFillAmount, float duration) {
+        float startFillAmount = slider.fillAmount;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration) {
+            elapsedTime += Time.deltaTime;
+            slider.fillAmount = Mathf.Lerp(startFillAmount, targetFillAmount, elapsedTime / duration);
+            yield return null;
+        }
+
+        slider.fillAmount = targetFillAmount;
+    }
 }

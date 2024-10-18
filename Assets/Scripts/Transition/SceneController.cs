@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SceneController : Singleton<SceneController>, ISaveable {
-
     public SceneFader sceneFaderPrefab;
 
     private Transform player;
@@ -24,7 +23,6 @@ public class SceneController : Singleton<SceneController>, ISaveable {
         ISaveable saveable = this;
         saveable.AutoRegisteSaveable();
         SaveManager.Instance.Load();
-
     }
 
     public void TransitionToDestination(TransitionPoint transitionPoint) {
@@ -33,8 +31,8 @@ public class SceneController : Singleton<SceneController>, ISaveable {
                 StartCoroutine(Transition(SceneManager.GetActiveScene().name, transitionPoint.destinationTag));
                 break;
             case TransitionPoint.TransitionType.DifferentScene:
-                StartCoroutine(Transition(transitionPoint.destinationSceneName, transitionPoint.destinationTag));
                 SaveManager.Instance.Save();
+                StartCoroutine(Transition(transitionPoint.destinationSceneName, transitionPoint.destinationTag));
                 break;
         }
     }
@@ -46,6 +44,7 @@ public class SceneController : Singleton<SceneController>, ISaveable {
             // 不同场景传送
             yield return SceneManager.LoadSceneAsync(targetSceneName);
             currentSceneName = targetSceneName;
+            SaveManager.Instance.Save();
             UpdateDestinationCache();
 
             TransitionDestination destination = UseTagGetDestination(destinationTag);
@@ -60,7 +59,6 @@ public class SceneController : Singleton<SceneController>, ISaveable {
                     yield return player;
                 }
             }
-            SaveManager.Instance.Load();
         } else {
             // 同场景传送
             TransitionDestination destination = UseTagGetDestination(destinationTag);
@@ -111,6 +109,8 @@ public class SceneController : Singleton<SceneController>, ISaveable {
             yield return StartCoroutine(fader.FadeOut(fadeOutTime));
             yield return SceneManager.LoadSceneAsync(sceneName);
 
+            currentSceneName = sceneName;
+
             if (GameObject.FindGameObjectWithTag("Player") == null) {
                 if (ResourceManager.IsInitialized) {
                     GameObject player = ResourceManager.Instance.InstantiateResource(playerPrefabPath, GameManager.Instance.GetEntrance().position, GameManager.Instance.GetEntrance().rotation);
@@ -136,6 +136,7 @@ public class SceneController : Singleton<SceneController>, ISaveable {
         GameSaveData saveData = new GameSaveData() {
             currentSceneName = SceneManager.GetActiveScene().name
         };
+        Debug.Log($"保存的场景名字为{currentSceneName}");
         return saveData;
     }
 
@@ -145,6 +146,7 @@ public class SceneController : Singleton<SceneController>, ISaveable {
             return;
         }
         currentSceneName = saveData.currentSceneName;
+        Debug.Log($"恢复的场景名字为{currentSceneName}");
     }
 
     public void TransitionToFirstScene() {
@@ -157,8 +159,11 @@ public class SceneController : Singleton<SceneController>, ISaveable {
     }
 
     public void TransitionToLoadScene() {
-        if (CurrentSceneName != null) {
+        if (!string.IsNullOrEmpty(CurrentSceneName)) {
             StartCoroutine(LoadScene(CurrentSceneName));
+            Debug.LogWarning($"要去的场景{CurrentSceneName}为保存的场景");
+        } else {
+            Debug.LogWarning("当前场景名为空，无法加载保存的场景");
         }
     }
 }

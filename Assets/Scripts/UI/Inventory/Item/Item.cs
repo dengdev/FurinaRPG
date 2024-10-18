@@ -1,19 +1,41 @@
 using UnityEngine;
 
-[SerializeField]
-public  class Item {
-    public int item_ID; // 序号
-    public string item_Name; // 名字
-    public int item_MaxStack; // 数量上限
-    public string item_IconPath; // 贴图文件路径
-    public string item_Description; // 文字描述
-    public string item_Quality; // 品质枚举
-    public string item_Type; // 物品种类枚举
-    public int item_CurrentQuantity; // 当前数量
+public class Item {
+    public int itemId;
+    public string itemName;
+    public int maxStack;
+    public string iconPath;
+    public string description;
+    public string quality;
+    public string type;
 
-    public void Use() { } // 使用方法
+    private int quantity;
+
+    public int Quantity {
+        get => quantity;
+        set {
+            quantity = Mathf.Clamp(value, 0, maxStack);
+        }
+    }
+
+    public virtual void Use(int quantity = 1) {
+        if (Quantity >= quantity) {
+            Quantity -= quantity;
+            // 在这里可以实现物品使用的其他逻辑
+            GameManager.Instance.playerData.items.Remove(this);
+            Debug.Log($"使用物品: {itemName}, 剩余数量: {Quantity}");
+        }
+    }
+
+    public bool IsEmpty() {
+        return Quantity <= 0;
+    }
 
     public Sprite LoadIcon() {
-        return Resources.Load<Sprite>($"UI/UI_Icon/{item_IconPath}");
+        return Resources.Load<Sprite>($"UI/UI_Icon/{iconPath}");
+    }
+
+    public Sprite LoadQuality() {
+        return ResourceManager.Instance.LoadResource<Sprite>($"UI/UI_Icon/SlotUI/{quality}");
     }
 }

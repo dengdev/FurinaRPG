@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -7,40 +8,40 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent), typeof(CharacterStats))]
 
 public class EnemyController : MonoBehaviour, IGameOverObserver {
-    private EnemyState enemyState;
-    private NavMeshAgent agent; 
-    private Animator animator; 
-    private Collider coll; 
+    protected EnemyState enemyState;
+    protected NavMeshAgent agent;
+    protected Animator animator;
+    protected Collider coll;
     protected CharacterStats enemyData;
 
-
-    [Header("Basic Settings")]
-    public float sightRadius; 
-    public bool isGuard; 
-    public float lookAtTime; 
+    [Header("基础设置")]
+    public float sightRadius;
+    public bool isGuard;
+    public float lookAtTime;
     private float enemyMoveSpeed;
     private float remainLookAtTime; // 剩余的观察时间
     protected GameObject attackTarget;
 
-    [Header("Partol State")]
+    [Header("初始状态")]
     public float patrolRange;
     private Vector3 patrolPoint;
-    private float lastAttackTime; 
-    private Vector3 guardPosition; 
-    private Quaternion guardRotation; 
+    private float lastAttackTime;
+    private Vector3 guardPosition;
+    private Quaternion guardRotation;
 
-    [Header("Alert Settings")]
-    public float alertTime = 3f; 
-    [SerializeField] private float alertTimer; 
+    [Header("警觉状态")]
+    public float alertTime = 3f;
+    [SerializeField] private float alertTimer;
 
-    
+
     bool isWalking, isChasing, isFollow, isDead;
-    bool playerIsDead; 
+    bool playerIsDead;
     private LayerMask playerLayer;
 
-    private Collider[] detectedColliders = new Collider[4]; 
+    private Collider[] detectedColliders = new Collider[4];
+    protected Vector3 lastTargetPosition;
 
-    void Awake() {
+    private void Awake() {
         playerLayer = LayerMask.GetMask("Player");
 
         agent = GetComponent<NavMeshAgent>();
@@ -56,6 +57,7 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
 
     private void Start() {
         enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL; // 初始化状态
+
         if (!isGuard) {
             GetNewPatrolPoint(); // 获取巡逻点
         }
@@ -94,23 +96,26 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
     }
 
     private void UpdateEnemyState() {
+
         if (isDead) {
             enemyState = EnemyState.DEAD;
-        } else if (PlayerDetected()) {
-            if (enemyState != EnemyState.ALERT && enemyState != EnemyState.CHASE) {
-                Debug.Log(this.name + "发现玩家");
-                enemyState = EnemyState.ALERT;
-                alertTimer = alertTime; // 重置警觉计时器
-            }
-        } else if (enemyState == EnemyState.ALERT) {
-            enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
         }
 
         switch (enemyState) {
             case EnemyState.GUARD:
+                if (Player_InSight()) {
+                    Debug.Log(this.name + "发现玩家");
+                    enemyState = EnemyState.ALERT;
+                    alertTimer = alertTime; // 重置警觉计时器
+                }
                 ExecuteGuardBehavior();
                 break;
             case EnemyState.PATROL:
+                if (Player_InSight()) {
+                    Debug.Log(this.name + "发现玩家");
+                    enemyState = EnemyState.ALERT;
+                    alertTimer = alertTime; // 重置警觉计时器
+                }
                 ExecutePatrolBehavior();
                 break;
             case EnemyState.ALERT:
@@ -127,15 +132,23 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         }
     }
     private void ExecuteAlertBehavior() {
-        isChasing = false;
+        isWalking = false;
 
-        // 警觉时间倒计时
         alertTimer -= Time.deltaTime;
+
+        if (attackTarget != null) {
+            transform.LookAt(attackTarget.transform.position);
+        }
+
+        if (!Player_InSight()) {
+            enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
+        }
+
         if (alertTimer <= 0) {
-            enemyState = EnemyState.CHASE; // 警觉时间结束，切换到追击状态
+            enemyState = EnemyState.CHASE;
         } else {
             // 警觉状态下可以选择继续原地等待或缓慢靠近玩家
-            //agent.destination = transform.position; // 保持当前站位
+            agent.destination = transform.position; // 保持当前站位
         }
     }
 
@@ -177,15 +190,13 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         isWalking = false;
         isChasing = true;
 
-        if (!PlayerDetected()) {
+        if (!Player_InSight()) {
             isFollow = false;
             if (remainLookAtTime > 0) {
                 agent.destination = transform.position;
                 remainLookAtTime -= Time.deltaTime;
-            } else if (isGuard)
-                enemyState = EnemyState.GUARD;
-            else
-                enemyState = EnemyState.PATROL;
+            } else
+                enemyState = isGuard ? EnemyState.GUARD : EnemyState.PATROL;
         } else {   // 给怪物一个反应时间
             isFollow = true;
             agent.isStopped = false;
@@ -196,20 +207,19 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
                 agent.isStopped = true;
                 if (lastAttackTime < 0) {
                     lastAttackTime = enemyData.attackData.coolDown;
-                    PerformEnemyAttack(); // 执行攻击逻辑
+                    PerformEnemyAttack();
                 }
             }
         }
     }
 
     private void ExecuteEnemyDeadBehavior() {
-        // 死亡后不会挡路
         agent.radius = 0;
         coll.enabled = false;
         Destroy(gameObject, 2f);
     }
 
-    private void PerformEnemyAttack() {
+    public virtual void PerformEnemyAttack() {
         enemyData.isCritical = Random.value < enemyData.attackData.criticalChance;
         transform.LookAt(attackTarget.transform);
 
@@ -222,27 +232,27 @@ public class EnemyController : MonoBehaviour, IGameOverObserver {
         }
     }
 
-    private bool WithinAttackRange() {
+    protected bool WithinAttackRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyData.attackData.attackRange;
     }
 
-    private bool WithinSkillRange() {
+    protected bool WithinSkillRange() {
         return attackTarget != null &&
             Vector3.Distance(attackTarget.transform.position, transform.position) <= enemyData.attackData.skillRange &&
             Vector3.Distance(attackTarget.transform.position, transform.position) > enemyData.attackData.attackRange;
     }
 
-    private bool PlayerDetected() {
+    private bool Player_InSight() {
         int numColliders = Physics.OverlapSphereNonAlloc(transform.position, sightRadius, detectedColliders, playerLayer);
 
         for (int i = 0; i < numColliders; i++) {
             if (detectedColliders[i].CompareTag("Player")) {
                 attackTarget = detectedColliders[i].gameObject;
+                lastTargetPosition = attackTarget.transform.position;
                 return true;
             }
         }
-
         attackTarget = null;
         return false;
     }

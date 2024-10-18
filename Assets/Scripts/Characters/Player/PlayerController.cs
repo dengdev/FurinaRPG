@@ -14,6 +14,8 @@ public class PlayerController : MonoBehaviour {
     public bool playerIsAttacking;
     public bool playerIsHIt;
     public bool playerIsDizzy;
+    public Queue<float> hitTimestamps = new Queue<float>();
+
 
     public float jumpVelocity;
     public bool isRunning = false;
@@ -49,38 +51,20 @@ public class PlayerController : MonoBehaviour {
     }
 
     private void OnEnable() {
-        Debug.Log("玩家控制器试图注册");
-        GameManager.Instance.RegisterPlayer(controllerPlayerStats);
+        GameManager.Instance.RegisterPlayer (controllerPlayerStats);
     }
 
     private void Start() {
-        Debug.Log("玩家控制器加载玩家数据,并且试图再次注册");
-        SaveManager.Instance.Load();
-        GameManager.Instance.RegisterPlayer(controllerPlayerStats);
-
-        if (GameManager.Instance.playerData == null) {
-            GameManager.Instance.playerData = new PlayerData(
-                    currentLevel: 1,
-                    maxLevel: 20,
-                    baseExp: 80,
-                    currentExp: 0,
-                    levelBuff: 0.1f,
-                    maxHealth: 100,
-                    currentHealth: 100,
-                    baseDefence: 2,
-                    currentDefence: 2
-                    );
-            Debug.Log("游戏管理员的玩家统计没有数据，于是初始化数据");
-        }
-        controllerPlayerStats.characterData = GameManager.Instance.playerData;
-
         isGround = true;
         ChangeState(new IdleState());
+        // 唤醒背包和菜单UI面板
+        // Debug.Log("玩家唤醒UI面板");
+        ResourceManager.Instance.InstantiateResource("Prefabs/Manager/CanvasManager",Vector3.zero,Quaternion.identity);
     }
-
 
     void Update() {
         if (Time.timeScale == 0) return;
+
         currentState?.Update();
 
         if (controllerPlayerStats.CurrentHealth <= 0 && currentState is not DeathState) {
@@ -89,9 +73,14 @@ public class PlayerController : MonoBehaviour {
         }
 
         if (Input.GetKeyDown(KeyCode.F)) {
-            Debug.Log("按下了F键");
-            GameManager.Instance.playerData.items.Add(SaveManager.Instance.allItems[1]);
-            GameManager.Instance.playerData.items.Add(SaveManager.Instance.allItems[2]);
+            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[1]);
+            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[2]);
+            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[3]);
+
+            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[4]);
+
+            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[5]);
+
         }
 
         if (knockbackTimer > 0) {

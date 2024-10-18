@@ -1,11 +1,10 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
 public class CharacterStats : MonoBehaviour {
-
     public event Action<int, int> OnHealthChanged;
     public event Action OnDeath;
     public event Action<int> OnGainExp;
@@ -16,50 +15,43 @@ public class CharacterStats : MonoBehaviour {
     public PlayerData playerData;
     public EnemyData enemyData;
 
-    private Animator animator;
-
     [HideInInspector]
     public bool isCritical; // 是否暴击
-    public bool isAttacking; 
+    public bool isAttacking;
 
     [Header("伤害跳字")]
-    public string damagePopupPrefabPath = "UI/DamageJumpShow";
-    private GameObject damagePopupPrefab;
-    private Canvas damageShowCanvas;
-    private Transform damageShow;//实例化出来的跳字
+    private GameObject damageText_World;
+    private GameObject damgeText;
 
+    private Canvas worldSpaceCanvas;
+    private Canvas cameraSpaceCanvas;
 
+    private Animator animator;
     private void Awake() {
         animator = GetComponent<Animator>();
-
-        if (damagePopupPrefab == null) {
-            damagePopupPrefab = Resources.Load<GameObject>(damagePopupPrefabPath);
-            if (damagePopupPrefab == null) {
-                Debug.LogError($"未在路径 '{damagePopupPrefabPath}' 找到伤害跳字预制体");
-                return;
-            }
-        }
+        damgeText = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/UI/DamageText");
 
         // 通过查找渲染模式找到血条挂载的画布。
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace) {
-                damageShowCanvas = canvas;
+                worldSpaceCanvas = canvas;
+            } else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
+                cameraSpaceCanvas = canvas;
             }
+        }
+
+        if (worldSpaceCanvas == null || cameraSpaceCanvas == null) {
+            Debug.LogError("未找到合适的Canvas");
         }
     }
 
     private void Start() {
         if (transform.GetComponent<PlayerController>() != null) {
-
             playerData = (PlayerData)characterData;
-
-            
-
             if (playerData != null) {
                 GameObject.Find("PlayerHealth Canvas").transform.GetChild(0).gameObject.SetActive(true);
             } else {
-                Debug.Log("玩家身上的数据为空，还没有加载数据");
-                Debug.Assert(false);
+                Debug.LogError("玩家身上的数据为空，还没有加载数据");
             }
         } else {
             enemyData = (EnemyData)characterData;
@@ -115,8 +107,8 @@ public class CharacterStats : MonoBehaviour {
     }
 
     private void ApplyDamage(int damage, CharacterStats defender) {
+        ShowDamagePopupCameraSpace(defender, damage);
 
-        ShowDamagePopup(defender, damage);
         defender.CurrentHealth = Mathf.Max(defender.CurrentHealth - damage, 0);
         if (defender.CurrentHealth < 0.01) {
             defender.OnDeath?.Invoke();
@@ -132,27 +124,45 @@ public class CharacterStats : MonoBehaviour {
         GameManager.Instance.playerStats.OnGainExp?.Invoke(exp);
     }
 
-    private void ShowDamagePopup(CharacterStats defender, int damage) {
-        damageShow = Instantiate(damagePopupPrefab, damageShowCanvas.transform).transform;
 
-        float randomRange = 0.8f;
-        Vector3 randomOffset = new Vector3(
-            UnityEngine.Random.Range(-randomRange, randomRange),
-            UnityEngine.Random.Range(0.8f, 1.4f), 
-            UnityEngine.Random.Range(-randomRange, randomRange)
-        );
-
-        damageShow.position = defender.transform.position + randomOffset;
-        damageShow.forward = Camera.main.transform.forward; 
-
-        TextMeshProUGUI _text = damageShow.GetComponent<TextMeshProUGUI>();
-        if (_text != null) {
-            _text.text = damage.ToString();
-        } else {
-            Debug.LogError("Damage Popup没有找到TextMeshProUGUI组件");
+    private void ShowDamagePopupCameraSpace(CharacterStats defender, int damage) {
+        if (GameManager.Instance.damageTextPool == null) {
+            GameManager.Instance.damageTextPool = new ObjectPool(damgeText, 5, 20, cameraSpaceCanvas.transform);
         }
 
-        StartCoroutine(MoveAndFade(damageShow));
+        GameObject damageText = GameManager.Instance.damageTextPool.GetFromPool();
+        RectTransform rectTransform = damageText.GetComponent<RectTransform>();
+        TextMeshProUGUI _text = damageText.GetComponent<TextMeshProUGUI>();
+        CanvasGroup canvasGroup = damageText.GetComponent<CanvasGroup>();
+
+        Vector2 screenPosition = Camera.main.WorldToScreenPoint(defender.transform.position);
+        screenPosition.y += 150f;
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(cameraSpaceCanvas.GetComponent<RectTransform>(), screenPosition, cameraSpaceCanvas.worldCamera, out Vector2 anchorPosition);
+
+        if (rectTransform != null) {
+            rectTransform.anchoredPosition = anchorPosition;
+            rectTransform.localScale = Vector3.zero;
+        }
+
+        if (canvasGroup != null) {
+            canvasGroup.alpha = 1f; // 确保透明度为 1
+        }
+
+        if (_text != null) {
+            _text.text = damage.ToString();
+        }
+
+
+        float randomXOffset = UnityEngine.Random.Range(-150f, 150f);
+        Vector2 targetPosition = new Vector2(randomXOffset, 100f)+ anchorPosition;
+
+        rectTransform.DOScale(Vector3.one, 0.8f).SetEase(Ease.OutBack);
+        rectTransform.DOAnchorPos(targetPosition, 2f).SetEase(Ease.OutQuad);
+
+        canvasGroup.DOFade(0f, 1f).SetDelay(0.6f).OnComplete(() => {
+            GameManager.Instance.damageTextPool.ReturnToPool(damageText);
+        });
     }
 
     private void TriggerHitAnimation(CharacterStats defender) {
@@ -170,6 +180,7 @@ public class CharacterStats : MonoBehaviour {
         }
     }
 
+
     private IEnumerator ResetHitAnimation(CharacterStats defender) {
 
         float hitAnimationLength = 0.5f;
@@ -183,26 +194,58 @@ public class CharacterStats : MonoBehaviour {
         }
     }
 
-    private IEnumerator MoveAndFade(Transform damageShow) {
+
+    private void ShowDamageText_World(CharacterStats defender, int damage) {
+
+        if (damageText_World == null) {
+            damageText_World = Resources.Load<GameObject>("UI/DamageJumpShow");
+            if (damageText_World == null) {
+                Debug.LogError($"未在路径 '{"UI/DamageJumpShow"}' 找到伤害跳字预制体");
+                return;
+            }
+        }
+
+        Transform damageShow = Instantiate(damageText_World, worldSpaceCanvas.transform).transform;
+        float randomRange = 0.8f;
+        Vector3 randomOffset = new Vector3(
+            UnityEngine.Random.Range(-randomRange, randomRange),
+            UnityEngine.Random.Range(0.8f, 1.4f),
+            UnityEngine.Random.Range(-randomRange, randomRange)
+        );
+
+        damageShow.position = defender.transform.position + randomOffset;
+        damageShow.forward = Camera.main.transform.forward;
+
+        TextMeshProUGUI _text = damageShow.GetComponent<TextMeshProUGUI>();
+        if (_text != null) {
+            _text.text = damage.ToString();
+        } else {
+            Debug.LogError("Damage Popup没有找到TextMeshProUGUI组件");
+        }
+
+        StartCoroutine(DamageText_MoveAndFade_World(damageShow));
+    }
+
+    private IEnumerator DamageText_MoveAndFade_World(Transform damageShow) {
         float duration = 1.5f;
         float elapsed = 0f;
 
         Vector3 startPos = damageShow.position;
 
-        float height = 0.5f; 
-        float distance = 2.5f; 
+        float height = 0.5f;
+        float distance = 2.5f;
 
         TextMeshProUGUI textComponent = damageShow.GetComponent<TextMeshProUGUI>();
         Color originalColor = textComponent.color;
 
         while (elapsed < duration) {
             float t = elapsed / duration;
-            Vector3 targetPos = startPos + Vector3.right * distance * t + Vector3.up * height * Mathf.Sin(t * Mathf.PI); 
+            Vector3 targetPos = startPos + Vector3.right * distance * t + Vector3.up * height * Mathf.Sin(t * Mathf.PI);
             textComponent.color = new Color(originalColor.r, originalColor.g, originalColor.b, Mathf.Lerp(1, 0, elapsed / duration));
             damageShow.position = targetPos;
 
             elapsed += Time.deltaTime;
-            yield return null; 
+            yield return null;
         }
         Destroy(damageShow.gameObject);
     }

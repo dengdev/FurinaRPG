@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static Rock;
 
 public class Stoneren : EnemyController {
     [Header("石头人技能设置")]
@@ -11,12 +10,7 @@ public class Stoneren : EnemyController {
 
     public Transform handPos;
 
-    private void Start() {
-    }
-    private void Update() {
-    }
 
-    // Animation Event
     public void KickOff() {
         if (attackTarget != null && transform.IsFacingTarget(attackTarget.transform)) {
             CharacterStats targetStats = attackTarget.GetComponent<CharacterStats>();
@@ -32,22 +26,50 @@ public class Stoneren : EnemyController {
         }
     }
 
-    // Animation Event
+    public override void PerformEnemyAttack() {
+        enemyData.isCritical = Random.value < enemyData.attackData.criticalChance;
+        transform.LookAt(attackTarget.transform);
+
+        if (WithinAttackRange()) {
+            animator.SetTrigger("Attack");
+            StartCoroutine(AttackDelayCoroutine(1f)); 
+        }
+
+        if (WithinSkillRange()) {
+            animator.SetTrigger("Skill");
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.IsName("ThrowRock")) {
+                if (stateInfo.normalizedTime == 0.6f) {
+                    Throwrock();
+                }
+
+            }
+
+        }
+    }
+
+    private IEnumerator AttackDelayCoroutine(float delay) {
+        // 等待指定的时间
+        yield return new WaitForSeconds(delay);
+        KickOff();
+    }
+
+
     public void Throwrock() {
+
         if (GameManager.Instance.rockPool == null) {
-            GameManager.Instance.rockPool = new ObjectPool(ResourceManager.Instance.LoadResource<GameObject>("Prefabs/Rock")
-, 3, 60, new GameObject("RockPool").transform);
+            GameManager.Instance.rockPool = new ObjectPool(ResourceManager.Instance.LoadResource<GameObject>("Prefabs/Enemy/Rock"), 3, 60, new GameObject("RockPool").transform);
         }
-        // 即使玩家脱离范围，也生成最后一块石头，避免动画不流畅
+
         GameObject rock = GameManager.Instance.rockPool.GetFromPool();
-        if (rock != null) {
+        rock.transform.position = handPos.position;
 
-            rock.transform.position = handPos.position;
-            Rigidbody rockRb = rock.GetComponent<Rigidbody>();
-
-            Vector3 direction = (attackTarget.transform.position - transform.position).normalized;
-            rockRb.AddForce(throwForce * direction, ForceMode.Impulse);
+        Vector3 direction;
+        if (attackTarget != null) {
+            direction = attackTarget.transform.position - transform.position;
+        } else {
+            direction = lastTargetPosition - transform.position;
         }
-
+        rock.GetComponent<Rigidbody>().AddForce(throwForce * (direction.normalized), ForceMode.Impulse);
     }
 }

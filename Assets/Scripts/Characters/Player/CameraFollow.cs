@@ -6,8 +6,8 @@ public class CameraFollow : MonoBehaviour {
      private float cameraMoveSpeed = 10.0f; // 相机移动速度
      private float sensitivity = 0.8f; // 视角灵敏度
      private float zoomSpeed = 2.5f; // 相机缩放速度
-     private float minDistance = 1.5f; // 镜头最近距离
-     private float maxDistance = 16f; // 镜头最远距离
+     private float minDistance = 1.2f; // 镜头最近距离
+     private float maxDistance = 10f; // 镜头最远距离
 
     private Transform _playerTarget;
     private Vector3 startOffset; // 相机初始偏移
