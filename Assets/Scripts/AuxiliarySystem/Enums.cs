@@ -2,6 +2,10 @@ public enum EnemyState {
     GUARD, PATROL, CHASE, DEAD, ALERT
 }
 
+public enum SceneTransitionType { SameScene, CrossScene }
+public enum TransferAnchorTag { Enter, A, B, C, D, E, F }
+
+
 public enum ItemName {
     None, Coin
 }
@@ -19,10 +23,10 @@ public enum ItemQuality {
 }
 
 public enum ItemType {
-    Weapon, // 武器
-    Relic, // 遗器
-    CultivationMaterial, // 培养素材
-    Cuisine, // 料理
-    Material, // 材料
-    QuestItem // 任务道具
+    Weapon, // 姝﹀櫒
+    Relic, // 閬楀櫒
+    CultivationMaterial, // 鍩瑰吇绱犳潗
+    Cuisine, // 鏂欑悊
+    Material, // 鏉愭枡
+    QuestItem // 浠诲姟閬撳叿
 }

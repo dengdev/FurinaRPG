@@ -31,7 +31,7 @@ public class MainMenu : MonoBehaviour {
     }
 
     private void ContinueGame() {
-        SceneController.Instance.TransitionToLoadScene();
+        SceneController.Instance.LoadSceneToContinueGame();
     }
 
 }

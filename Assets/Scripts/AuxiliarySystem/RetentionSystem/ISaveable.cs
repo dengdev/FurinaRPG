@@ -1,8 +1,5 @@
-/// <summary>
-/// ËùÓĞĞèÒª±£´æµÄÄÚÈİĞèÒª¼Ì³Ğ¸Ã½Ó¿Ú
-/// </summary>
 public interface ISaveable {
-    // ×Ô¶¯×¢²áµ½ SaveManager ÒÔ½øĞĞÍ³Ò»±£´æ²Ù×÷
+    // è‡ªåŠ¨æ³¨å†Œåˆ° SaveManager ä»¥è¿›è¡Œç»Ÿä¸€ä¿å­˜æ“ä½œ
     public void AutoRegisteSaveable() {
         SaveManager.Instance.RegisterSaveable(this);
     }

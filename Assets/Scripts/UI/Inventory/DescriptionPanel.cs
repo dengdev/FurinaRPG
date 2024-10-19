@@ -30,7 +30,7 @@ public class DescriptionPanel : MonoBehaviour
             description.text = item.description; 
         } else {
             description.text = "";
-            Debug.LogWarning("Item passed to UpdateDescription is null.");
+            Debug.LogWarning("当前背包中没有物品，不能更新描述");
         }
     }
 }

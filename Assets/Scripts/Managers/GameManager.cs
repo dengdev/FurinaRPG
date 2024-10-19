@@ -79,16 +79,6 @@ public class GameManager : Singleton<GameManager>, ISaveable {
         }
     }
 
-    public Transform GetEntrance() {
-        foreach (TransitionDestination item in FindObjectsOfType<TransitionDestination>()) {
-            if (item.destinationtag == TransitionDestination.DestinationTag.Enter) {
-                return item.transform;
-            }
-        }
-        Debug.Log("没有找到入口");
-        return null;
-    }
-
     public GameSaveData GenerateSaveData() {
         if (playerData == null) {
             Debug.LogWarning ($"生成保存数据时，{this.name}的playerData为空");
@@ -102,6 +92,7 @@ public class GameManager : Singleton<GameManager>, ISaveable {
     }
 
     private void OnApplicationQuit() {
+        Debug.Log("退出游戏时，游戏管理员负责保存");
         SaveManager.Instance.Save();
     }
 }

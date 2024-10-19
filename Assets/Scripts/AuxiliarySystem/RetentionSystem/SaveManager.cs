@@ -15,11 +15,11 @@ public class EnemyDataList {
 }
 
 public class SaveManager : Singleton<SaveManager> {
-    public ReadOnlyDictionary<int, Item> allItems; // Ê¹ÓÃ×Öµä´æ´¢È«¾ÖÎïÆ·ÁĞ±í
+    public ReadOnlyDictionary<int, Item> allItems; // ä½¿ç”¨å­—å…¸å­˜å‚¨å…¨å±€ç‰©å“åˆ—è¡¨
     public ReadOnlyDictionary<string, EnemyData> allEnemyData;
 
-    private Dictionary<int, Item> itemDictionary = new(); // Ë½ÓĞ×Öµä´æ´¢ËùÓĞÎïÆ·
-    private Dictionary<string, EnemyData> enemyDictionary = new(); // Ë½ÓĞ×Öµä´æ´¢ËùÓĞµĞÈË
+    private Dictionary<int, Item> itemDictionary = new(); // ç§æœ‰å­—å…¸å­˜å‚¨æ‰€æœ‰ç‰©å“
+    private Dictionary<string, EnemyData> enemyDictionary = new(); // ç§æœ‰å­—å…¸å­˜å‚¨æ‰€æœ‰æ•Œäºº
 
     private string jsonFolder;
     private List<ISaveable> saveableList = new List<ISaveable>();
@@ -66,9 +66,9 @@ public class SaveManager : Singleton<SaveManager> {
 
             string jsonData = JsonConvert.SerializeObject(saveDataDictionary, Formatting.Indented);
             File.WriteAllText(resultPath, jsonData);
-            Debug.Log("±£´æ³É¹¦");
+            Debug.Log("ä¿å­˜æˆåŠŸ");
         } catch (Exception ex) {
-            Debug.LogError($"±£´æÊ§°Ü: {ex.Message}");
+            Debug.LogError($"ä¿å­˜å¤±è´¥: {ex.Message}");
         }
     }
 
@@ -85,21 +85,21 @@ public class SaveManager : Singleton<SaveManager> {
                     saveable.RestoreGameData(gameSaveData);
                 }
             }
-            Debug.Log("¼ÓÔØ³É¹¦");
+            Debug.Log("åŠ è½½æˆåŠŸ");
         } catch (Exception ex) {
-            Debug.LogError($"¼ÓÔØÊ§°Ü: {ex.Message}");
+            Debug.LogError($"åŠ è½½å¤±è´¥: {ex.Message}");
         }
     }
 
     private void Update() {
 
         if (Input.GetKeyDown(KeyCode.R)) {
-            Debug.Log("°´ÏÂR±£´æÍæ¼ÒÊı¾İ");
+            Debug.Log("æŒ‰ä¸‹Rä¿å­˜ç©å®¶æ•°æ®");
             Save();
         }
 
         if (Input.GetKeyDown(KeyCode.L)) {
-            Debug.Log("°´ÏÂL¶ÁÈ¡Íæ¼ÒÊı¾İ");
+            Debug.Log("æŒ‰ä¸‹Lè¯»å–ç©å®¶æ•°æ®");
             Load();
         }
     }
@@ -131,12 +131,12 @@ public class SaveManager : Singleton<SaveManager> {
 
             T dataList = converter != null
            ? JsonConvert.DeserializeObject<T>(stringData, converter)
-           : JsonConvert.DeserializeObject<T>(stringData); // Ä¬ÈÏ·´ĞòÁĞ»¯
+           : JsonConvert.DeserializeObject<T>(stringData); // é»˜è®¤ååºåˆ—åŒ–
 
-            onDataLoaded(dataList); // Ê¹ÓÃÎ¯ÍĞ´¦Àí¼ÓÔØºóµÄÊı¾İ
+            onDataLoaded(dataList); // ä½¿ç”¨å§”æ‰˜å¤„ç†åŠ è½½åçš„æ•°æ®
 
         } else {
-            Debug.LogError("Î´ÄÜÕÒµ½ JSON ÎÄ¼ş: " + resultPath);
+            Debug.LogError("æœªèƒ½æ‰¾åˆ° JSON æ–‡ä»¶: " + resultPath);
         }
     }
 
@@ -145,7 +145,7 @@ public class SaveManager : Singleton<SaveManager> {
         if (item != null) {
             return item;
         } else {
-            Debug.Log($"´Ë{itemID}ÎªÎŞĞ§ID");
+            Debug.Log($"æ­¤{itemID}ä¸ºæ— æ•ˆID");
             return null;
         }
     }
@@ -154,9 +154,9 @@ public class SaveManager : Singleton<SaveManager> {
 
         if (allEnemyData.TryGetValue(enemyName, out EnemyData enemy)) {
             EnemyData enemyCopy = new EnemyData(enemy.maxHealth, enemy.currentHealth, enemy.baseDefence, enemy.currentDefence, enemy.killPoint);
-            return enemyCopy; // Éî¶È¸´ÖÆ
+            return enemyCopy; // æ·±åº¦å¤åˆ¶
         } else {
-            Debug.LogWarning($"´ËµĞÈË '{enemyName}' ÎªÎŞĞ§Ãû³Æ");
+            Debug.LogWarning($"æ­¤æ•Œäºº '{enemyName}' ä¸ºæ— æ•ˆåç§°");
             return null;
         }
     }
