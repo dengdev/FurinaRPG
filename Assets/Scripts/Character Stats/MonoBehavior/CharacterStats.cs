@@ -120,7 +120,7 @@ public class CharacterStats : MonoBehaviour {
     }
 
     private void PlayerGainExp(int exp) {
-        GameManager.Instance.playerStats.playerData.UpdateExp(exp);
+        GameManager.Instance.playerStats.playerData.AddExp(exp);
         GameManager.Instance.playerStats.OnGainExp?.Invoke(exp);
     }
 

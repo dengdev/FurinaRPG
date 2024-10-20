@@ -15,26 +15,15 @@ public class EnemyDataList {
 }
 
 public class SaveManager : Singleton<SaveManager> {
-    public ReadOnlyDictionary<int, Item> allItems; // 使用字典存储全局物品列表
-    public ReadOnlyDictionary<string, EnemyData> allEnemyData;
-
-    private Dictionary<int, Item> itemDictionary = new(); // 私有字典存储所有物品
-    private Dictionary<string, EnemyData> enemyDictionary = new(); // 私有字典存储所有敌人
+    private List<ISaveable> saveableList = new List<ISaveable>();
 
     private string jsonFolder;
-    private List<ISaveable> saveableList = new List<ISaveable>();
     private Dictionary<string, GameSaveData> saveDataDictionary = new Dictionary<string, GameSaveData>();
 
     protected override void Awake() {
         base.Awake();
         DontDestroyOnLoad(this.gameObject);
         jsonFolder = Path.Combine(Application.persistentDataPath, "/GameSaveData/");
-        allItems = new ReadOnlyDictionary<int, Item>(itemDictionary);
-        allEnemyData = new ReadOnlyDictionary<string, EnemyData>(enemyDictionary);
-    }
-
-    private void Start() {
-        LoadAllData();
     }
 
     public void OnStartNewGame() {
@@ -101,63 +90,6 @@ public class SaveManager : Singleton<SaveManager> {
         if (Input.GetKeyDown(KeyCode.L)) {
             Debug.Log("按下L读取玩家数据");
             Load();
-        }
-    }
-
-    private void LoadAllData() {
-
-        LoadData<ItemList>("Resources/Data/items.json",
-            itemList => {
-                foreach (Item item in itemList.items) {
-                    itemDictionary[item.itemId] = item;
-                }
-            },
-            new ItemConverter());
-
-        LoadData<EnemyDataList>("Resources/Data/enemies.json",
-            enemyDataList => {
-                foreach (EnemyData enemy in enemyDataList.enemies) {
-                    enemyDictionary[enemy.characterName] = enemy;
-                }
-            });
-
-    }
-
-    private void LoadData<T>(string path, Action<T> onDataLoaded, JsonConverter converter = null) {
-        string resultPath = Path.Combine(Application.dataPath, path);
-
-        if (File.Exists(resultPath)) {
-            string stringData = File.ReadAllText(resultPath, Encoding.UTF8);
-
-            T dataList = converter != null
-           ? JsonConvert.DeserializeObject<T>(stringData, converter)
-           : JsonConvert.DeserializeObject<T>(stringData); // 默认反序列化
-
-            onDataLoaded(dataList); // 使用委托处理加载后的数据
-
-        } else {
-            Debug.LogError("未能找到 JSON 文件: " + resultPath);
-        }
-    }
-
-    public Item GetItem(int itemID) {
-        allItems.TryGetValue(itemID, out Item item);
-        if (item != null) {
-            return item;
-        } else {
-            Debug.Log($"此{itemID}为无效ID");
-            return null;
-        }
-    }
-
-    public EnemyData GetEnemy(string enemyName) {
-
-        if (allEnemyData.TryGetValue(enemyName, out EnemyData enemy)) {
-            EnemyData enemyCopy = new EnemyData(enemy.maxHealth, enemy.currentHealth, enemy.baseDefence, enemy.currentDefence, enemy.killPoint);
-            return enemyCopy; // 深度复制
-        } else {
-            Debug.LogWarning($"此敌人 '{enemyName}' 为无效名称");
-            return null;
         }
     }
 }

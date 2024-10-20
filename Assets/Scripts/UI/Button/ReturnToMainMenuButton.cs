@@ -12,6 +12,6 @@ public class ReturnToMainMenuButton : MonoBehaviour
     }
 
     void ReturnToMainMenu() {
-        SceneController.Instance.ReturnMenuScene();
+        SceneManager.Instance.ReturnMenuScene();
     }
 }

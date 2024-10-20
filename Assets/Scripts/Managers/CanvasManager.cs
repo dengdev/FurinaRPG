@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CanvasManager : Singleton<CanvasManager>
-{
-   [SerializeField] private Dictionary<string, GameObject> canvasesDict = new Dictionary<string, GameObject>();
+public class CanvasManager : Singleton<CanvasManager> {
+
+    public Dictionary<string, GameObject> canvasDict = new();
     private int openCanvasCount = 0;
 
     public event Action OnInventoryToggle;
@@ -16,18 +16,19 @@ public class CanvasManager : Singleton<CanvasManager>
     }
 
     private void InitializeCanvases() {
-        GameObject[] canvasPrefabs = Resources.LoadAll<GameObject>("Canvas");
-        canvasesDict.Clear();
+        GameObject[] canvasPrefabs = Resources.LoadAll<GameObject>("Prefabs/Canvas");
+        canvasDict.Clear();
 
         foreach (GameObject prefab in canvasPrefabs) {
             GameObject canvasInstance = Instantiate(prefab);
+            
             canvasInstance.name = prefab.name;
             canvasInstance.SetActive(false);
-            canvasesDict.Add(prefab.name, canvasInstance);
+            canvasDict.Add(prefab.name, canvasInstance);
         }
     }
 
-   private  void Update() {
+    private void Update() {
         if (Input.GetKeyDown(KeyCode.B)) {
             ToggleCanvas("InventoryCanvas");
             OnInventoryToggle?.Invoke(); // 打开面板并更新
@@ -36,10 +37,13 @@ public class CanvasManager : Singleton<CanvasManager>
         if (Input.GetKeyDown(KeyCode.Escape)) {
             ToggleCanvas("MenuCanvas");
         }
+        if (Input.GetKeyDown(KeyCode.Tab)) {
+            ToggleCanvas("QuestCanvas");
+        }
     }
 
     public void ToggleCanvas(string canvasName) {
-        if (canvasesDict.TryGetValue(canvasName, out GameObject canvas)) {
+        if (canvasDict.TryGetValue(canvasName, out GameObject canvas)) {
             bool isActive = canvas.activeSelf;
             canvas.SetActive(!isActive);
 
@@ -56,8 +60,8 @@ public class CanvasManager : Singleton<CanvasManager>
         }
     }
 
-     public void CloseCanvas(string canvasName) {
-        if (canvasesDict.TryGetValue(canvasName, out GameObject canvas) && canvas.activeSelf) {
+    public void CloseCanvas(string canvasName) {
+        if (canvasDict.TryGetValue(canvasName, out GameObject canvas) && canvas.activeSelf) {
             canvas.SetActive(false);
             openCanvasCount = Mathf.Max(0, openCanvasCount - 1);
             Time.timeScale = openCanvasCount > 0 ? 0 : 1;

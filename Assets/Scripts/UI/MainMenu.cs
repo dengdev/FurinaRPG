@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Playables;
@@ -20,18 +18,16 @@ public class MainMenu : MonoBehaviour {
         playableDirector.stopped += StartGame;
     }
 
-
     private void PlayStartTimeline() {
         playableDirector.Play();
     }
 
     private void StartGame(PlayableDirector ueslessObj) {
         GameManager.Instance.playerData = null;
-        SceneController.Instance.TransitionToFirstScene();
+        SceneManager.Instance.TransitionToFirstScene();
     }
 
     private void ContinueGame() {
-        SceneController.Instance.LoadSceneToContinueGame();
+        SceneManager.Instance.LoadSceneToContinueGame();
     }
-
 }

@@ -35,7 +35,7 @@ public class FactoryManager : Singleton<FactoryManager>
         if (obj != null) {
             var characterStats = obj.GetComponent<CharacterStats>();
             if (characterStats != null) {
-                characterStats.characterData = SaveManager.Instance.GetEnemy(obj.name);
+                characterStats.characterData = GlobalDataManager.Instance.GetEnemy(obj.name);
             } else {
                 Debug.LogError("CharacterStats 组件未在生成的对象上找到。");
             }

@@ -16,6 +16,17 @@ public class GameManager : Singleton<GameManager>, ISaveable {
         DontDestroyOnLoad(this.gameObject);
     }
 
+    private void Update() {
+        if (Input.GetKeyDown(KeyCode.F)) {
+            Debug.Log("游戏管理员添加物品");
+           playerData.AddItem(GlobalDataManager.Instance.GetItem(1));
+           playerData.AddItem(GlobalDataManager.Instance.GetItem(2));
+           playerData.AddItem(GlobalDataManager.Instance.GetItem(3));
+           playerData.AddItem(GlobalDataManager.Instance.GetItem(4));
+           playerData.AddItem(GlobalDataManager.Instance.GetItem(5));
+        }
+    }
+
     private void Start() {
         ISaveable saveable = this;
         saveable.AutoRegisteSaveable();

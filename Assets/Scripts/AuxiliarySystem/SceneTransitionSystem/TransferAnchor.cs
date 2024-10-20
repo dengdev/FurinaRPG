@@ -33,7 +33,7 @@ public class TransferAnchor : MonoBehaviour {
 
     private void Update() {
         if (isPlayerInTransitionZone && Input.GetKeyDown(KeyCode.T)) {
-            SceneController.Instance.TransferToTargetAnchor(this); 
+            SceneManager.Instance.TransferToTargetAnchor(this); 
             isPlayerInTransitionZone = false; 
         }
     }

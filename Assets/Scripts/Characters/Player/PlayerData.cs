@@ -26,7 +26,7 @@ public class PlayerData : Characters {
 
     private float LevelMultiplier { get { return 1 + (currentLevel - 1) * levelBuff; } }
 
-    public void UpdateExp(int exp) {
+    public void AddExp(int exp) {
         if (exp < 0) return;
         currentExp += exp;
         while (currentExp >= baseExp) {

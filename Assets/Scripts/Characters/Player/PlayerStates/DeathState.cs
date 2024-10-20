@@ -21,7 +21,7 @@ public class DeathState : IPlayerState {
 
     private IEnumerator WaitAndShowGameOverScreen() {
         yield return new WaitForSeconds(gameEndTime);
-        SceneController.Instance.ReturnMenuScene();
+        SceneManager.Instance.ReturnMenuScene();
     }
 
 }

@@ -30,3 +30,10 @@ public enum ItemType {
     Material, // 材料
     QuestItem // 任务道具
 }
+
+public enum QuestStatus {
+    Available,   // 待接取
+    InProgress,  // 进行中
+    Completed,   // 已完成
+    Submitted    // 已提交
+}

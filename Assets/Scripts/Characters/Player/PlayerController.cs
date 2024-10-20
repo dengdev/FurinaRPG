@@ -72,17 +72,6 @@ public class PlayerController : MonoBehaviour {
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.F)) {
-            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[1]);
-            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[2]);
-            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[3]);
-
-            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[4]);
-
-            GameManager.Instance.playerData.AddItem(SaveManager.Instance.allItems[5]);
-
-        }
-
         if (knockbackTimer > 0) {
             HandleKnockback();
         }
