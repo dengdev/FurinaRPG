@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
@@ -16,66 +15,55 @@ public class EnemyHealthBarUI : MonoBehaviour {
     private GameObject EnemyHPbar;
     private Image changeHP;
     private Image currentHP;
-    private Transform mainCameraTransform;
-    private CharacterStats enemStats_HPBar;
-
-    private ObjectPool enemyHPPool;
+    private CharacterStats enemStats_HpBar;
+    private ObjectPool enemyHpPool;
 
     private void Awake() {
         InitializeHealthBar();
     }
 
     private void OnEnable() {
-        mainCameraTransform = Camera.main.transform;
+        EventManager.Subscribe("EnemyDeath", HideEnemyHPUI);
+        EventManager.Subscribe<(int,int)>("ChangeEnemyHp", UpdateHealthBarUI);
 
-        if (enemStats_HPBar != null) {
-            enemStats_HPBar.OnHealthChanged += UpdateHealthBarUI;
-            enemStats_HPBar.OnDeath += HideHealthBarUI;
-        }
     }
 
     private void Start() {
-        if (enemStats_HPBar != null) {
-            currentHP.fillAmount = enemStats_HPBar.CurrentHealth / enemStats_HPBar.MaxHealth;
+        if (enemStats_HpBar != null) {
+            currentHP.fillAmount = enemStats_HpBar.CurrentHealth / enemStats_HpBar.MaxHealth;
             changeHP.fillAmount = currentHP.fillAmount;
         }
     }
 
     private void OnDisable() {
-        if (enemStats_HPBar != null) {
-            enemStats_HPBar.OnHealthChanged -= UpdateHealthBarUI;
-            enemStats_HPBar.OnDeath -= HideHealthBarUI;
-        }
+        EventManager.Unsubscribe("EnemyDeath", HideEnemyHPUI);
+        EventManager.Unsubscribe<(int, int)>("ChangeEnemyHp", UpdateHealthBarUI);
     }
 
     private void LateUpdate() {
         if (EnemyHPbar != null) {
-            UpdateUIPosition();
-            AutoHideUI();
+            EnemyHPbar.transform.position = hpBarPointAtEnemyHead.position;
+            EnemyHPbar.transform.forward = Camera.main.transform.forward;
+            AutoHideHpBar();
         }
     }
 
     private void InitializeHealthBar() {
-        enemStats_HPBar = GetComponent<CharacterStats>();
-
+        enemStats_HpBar = GetComponent<CharacterStats>();
         hpBarPointAtEnemyHead = transform.Find("HealthBar Point");
+
         if (hpBarPointAtEnemyHead == null) {
             Debug.LogError("未找到敌人头顶的 'HealthBar Point' 节点: " + gameObject.name);
             return;
         }
-
         GameObject healthUIPrefab = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/UI/EnemyHPBar");
 
         // 通过查找渲染模式找到血条挂载的画布。
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace) {
-
-                if (GameManager.Instance.enemyHPPool == null) {
-                    GameManager.Instance.enemyHPPool = new ObjectPool(healthUIPrefab, 5, 20, canvas.transform);
-                }
-
-                enemyHPPool = GameManager.Instance.enemyHPPool;
-                EnemyHPbar = enemyHPPool.GetFromPool();
+                enemyHpPool = GameManager.Instance.enemyHPPool?? new ObjectPool(healthUIPrefab, 5, 20, canvas.transform);
+                GameManager.Instance.enemyHPPool=enemyHpPool;
+                EnemyHPbar = enemyHpPool.GetFromPool();
                 changeHP = EnemyHPbar.transform.GetChild(0).GetComponent<Image>();
                 currentHP = EnemyHPbar.transform.GetChild(1).GetComponent<Image>();
                 EnemyHPbar.SetActive(isAlwaysShow);
@@ -83,12 +71,8 @@ public class EnemyHealthBarUI : MonoBehaviour {
         }
     }
 
-    private void UpdateUIPosition() {
-        EnemyHPbar.transform.position = hpBarPointAtEnemyHead.position;
-        EnemyHPbar.transform.forward = mainCameraTransform.forward;
-    }
+    private void AutoHideHpBar() {
 
-    private void AutoHideUI() {
         if (showTimer <= 0 && !isAlwaysShow) {
             EnemyHPbar.SetActive(false);
         } else {
@@ -96,19 +80,19 @@ public class EnemyHealthBarUI : MonoBehaviour {
         }
     }
 
-    private void UpdateHealthBarUI(int currentHealth, int maxHealth) {
-        currentHP.fillAmount = (float)currentHealth / maxHealth;
+    private void UpdateHealthBarUI((int currentHealth, int maxHealth) healthData) {
+        float healthPercent = (float)healthData.currentHealth / healthData.maxHealth;
 
-        if (currentHealth > 0) {
+        if (healthData.currentHealth > 0) {
             EnemyHPbar.SetActive(true);
             showTimer = showTime;
         }
-
-        changeHP.DOFillAmount(currentHP.fillAmount, changeTime).SetEase(Ease.OutQuad);
+        currentHP.fillAmount = healthPercent;
+        changeHP.DOFillAmount(healthPercent, changeTime).SetEase(Ease.OutQuad);
     }
 
-    private void HideHealthBarUI() {
-        enemyHPPool.ReturnToPool(EnemyHPbar);
+    private void HideEnemyHPUI() {
+        enemyHpPool.ReturnToPool(EnemyHPbar);
     }
 
     // 使用 DOTween 替代协程进行血条填充动画。减少使用协程所带来的开销
@@ -121,7 +105,6 @@ public class EnemyHealthBarUI : MonoBehaviour {
             slider.fillAmount = Mathf.Lerp(startFillAmount, targetFillAmount, elapsedTime / duration);
             yield return null;
         }
-
         slider.fillAmount = targetFillAmount;
     }
 }

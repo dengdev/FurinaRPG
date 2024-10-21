@@ -23,6 +23,24 @@ public static class EventManager {
         }
     }
 
+    public static void Subscribe(string eventName, Action listener) {
+        if (string.IsNullOrEmpty(eventName) || listener == null) {
+            throw new ArgumentNullException("事件名称或监听器不能为空");
+        }
+
+        if (!eventTable.ContainsKey(eventName)) {
+            eventTable[eventName] = listener;
+        } else {
+            if (eventTable[eventName] is Action existingDelegate) {
+                eventTable[eventName] = Delegate.Combine(existingDelegate, listener);
+            } else {
+                throw new InvalidOperationException($"事件 {eventName} 的签名不匹配.");
+            }
+        }
+    }
+
+
+
     // 取消订阅事件
     public static void Unsubscribe<T>(string eventName, Action<T> listener) {
         if (string.IsNullOrEmpty(eventName) || listener == null) {
@@ -46,6 +64,27 @@ public static class EventManager {
             }
         }
     }
+    public static void Unsubscribe(string eventName, Action listener) {
+        if (string.IsNullOrEmpty(eventName) || listener == null) {
+            throw new ArgumentNullException("事件名称或监听器不能为空");
+        }
+
+        if (eventTable.ContainsKey(eventName)) {
+            var currentDelegate = eventTable[eventName];
+
+            if (currentDelegate is Action existingDelegate) {
+                var newDelegate = Delegate.Remove(existingDelegate, listener);
+                if (newDelegate == null) {
+                    eventTable.Remove(eventName);
+                } else {
+                    eventTable[eventName] = newDelegate;
+                }
+            } else {
+                throw new InvalidOperationException($"事件 {eventName} 的签名不匹配.");
+            }
+        }
+    }
+
 
     // 发布事件，安全调用
     public static void Publish<T>(string eventName, T eventData = default) {
@@ -63,8 +102,27 @@ public static class EventManager {
             Debug.LogWarning($"事件 {eventName} 没有订阅者.");
         }
     }
+
+    public static void Publish(string eventName) {
+        if (eventTable.ContainsKey(eventName)) {
+            if (eventTable[eventName] is Action callback) {
+                try {
+                    callback?.Invoke();
+                } catch (Exception ex) {
+                    Debug.LogError($"事件 {eventName} 执行时发生错误: {ex}");
+                }
+            } else {
+                throw new InvalidOperationException($"事件 {eventName} 的签名不匹配.");
+            }
+        } else {
+            Debug.LogWarning($"事件 {eventName} 没有订阅者.");
+        }
+    }
 }
 
+/// <summary>
+/// 可以封装事件数据
+/// </summary>
 public class EventData {
     public string eventName;
     public object data;

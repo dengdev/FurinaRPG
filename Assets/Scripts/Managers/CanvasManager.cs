@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class CanvasManager : Singleton<CanvasManager> {
-
     public Dictionary<string, GameObject> canvasDict = new();
     private int openCanvasCount = 0;
 
@@ -12,28 +10,14 @@ public class CanvasManager : Singleton<CanvasManager> {
 
     protected override void Awake() {
         base.Awake();
-        InitializeCanvases();
-    }
-
-    private void InitializeCanvases() {
-        GameObject[] canvasPrefabs = Resources.LoadAll<GameObject>("Prefabs/Canvas");
-        canvasDict.Clear();
-
-        foreach (GameObject prefab in canvasPrefabs) {
-            GameObject canvasInstance = Instantiate(prefab);
-            
-            canvasInstance.name = prefab.name;
-            canvasInstance.SetActive(false);
-            canvasDict.Add(prefab.name, canvasInstance);
-        }
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Update() {
         if (Input.GetKeyDown(KeyCode.B)) {
             ToggleCanvas("InventoryCanvas");
-            OnInventoryToggle?.Invoke(); // 打开面板并更新
+            OnInventoryToggle?.Invoke();
         }
-
         if (Input.GetKeyDown(KeyCode.Escape)) {
             ToggleCanvas("MenuCanvas");
         }
@@ -45,28 +29,39 @@ public class CanvasManager : Singleton<CanvasManager> {
     public void ToggleCanvas(string canvasName) {
         if (canvasDict.TryGetValue(canvasName, out GameObject canvas)) {
             bool isActive = canvas.activeSelf;
-            canvas.SetActive(!isActive);
-
             if (isActive) {
-                openCanvasCount = Mathf.Max(0, openCanvasCount - 1);
+                CloseAndDestroyCanvas(canvasName);
             } else {
+                canvas.SetActive(true);
                 openCanvasCount++;
             }
-
-            // 如果有任何画布打开，暂停游戏；否则恢复游戏
-            Time.timeScale = openCanvasCount > 0 ? 0 : 1;
         } else {
-            Debug.LogWarning($"未找到 Canvas: {canvasName}");
+            LoadAndInstantiateCanvas(canvasName);
+        }
+        Time.timeScale = openCanvasCount > 0 ? 0 : 1;
+    }
+
+    private void LoadAndInstantiateCanvas(string canvasName) {
+        GameObject canvasPrefab = Resources.Load<GameObject>($"Prefabs/UI/Canvas/{canvasName}");
+        if (canvasPrefab != null) {
+            GameObject canvasInstance = Instantiate(canvasPrefab);
+            canvasInstance.name = canvasPrefab.name;
+            canvasInstance.SetActive(true);
+            canvasDict.Add(canvasName, canvasInstance);
+            openCanvasCount++;
+            Debug.Log($"成功加载 Canvas: {canvasName}");
+        } else {
+            Debug.LogWarning($"未找到 Canvas 预制体: {canvasName}");
         }
     }
 
-    public void CloseCanvas(string canvasName) {
-        if (canvasDict.TryGetValue(canvasName, out GameObject canvas) && canvas.activeSelf) {
+    private void CloseAndDestroyCanvas(string canvasName) {
+        if (canvasDict.TryGetValue(canvasName, out GameObject canvas)) {
             canvas.SetActive(false);
+            Destroy(canvas);
+            canvasDict.Remove(canvasName);
             openCanvasCount = Mathf.Max(0, openCanvasCount - 1);
-            Time.timeScale = openCanvasCount > 0 ? 0 : 1;
-        } else {
-            Debug.LogWarning($"未找到 Canvas 或 Canvas 已经关闭: {canvasName}");
+            Debug.Log($"成功关闭并销毁 Canvas: {canvasName}");
         }
     }
 }

@@ -17,9 +17,6 @@ public class Rock : MonoBehaviour {
     private float spawnTime = 0.5f;
     private float stateTimer;
 
-    private void Start() {
-       
-    }
 
     private void OnEnable() {
         StopAllCoroutines();
@@ -82,13 +79,21 @@ public class Rock : MonoBehaviour {
         if (collision.gameObject.GetComponent<Stoneren>()) {
             CharacterStats defender = collision.gameObject.GetComponent<CharacterStats>();
             defender.TakeRockDamage(rockDamage * HitStoneRen_Multiply, defender); 
-            Instantiate(breakEffect, transform.position, Quaternion.identity); // 生成击碎特效
+
+            // 生成击碎特效
+            Vector3 collisionPoint = collision.contacts[0].point;
+
+            // 在碰撞点生成击碎特效
+            Instantiate(breakEffect, collisionPoint, Quaternion.identity);
+
+            // 将石块归还到对象池
             GameManager.Instance.rockPool.ReturnToPool(gameObject);
         }
     }
 
     private IEnumerator LifeCycle() {
         yield return new WaitForSeconds(10f);
+        rb.GetComponent<Collider>().enabled=false;
         rb.isKinematic = true; 
 
         Vector3 startPosition = transform.position;
@@ -101,7 +106,9 @@ public class Rock : MonoBehaviour {
             yield return null; 
         }
         transform.position = endPosition;
-        rb.isKinematic = false; 
+        rb.isKinematic = false;
+        rb.GetComponent<Collider>().enabled = true;
+
 
         GameManager.Instance.rockPool.ReturnToPool(gameObject);
     }

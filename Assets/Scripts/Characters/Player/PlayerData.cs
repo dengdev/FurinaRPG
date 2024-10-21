@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerData : Characters {
 
-    public int currentLevel;
+    public int level;
     public int maxLevel;
     public int baseExp, currentExp;
     public float levelBuff;
@@ -16,7 +16,7 @@ public class PlayerData : Characters {
                       int maxHealth, int currentHealth, int baseDefence, int currentDefence , List<Item> items)
         : base(maxHealth, currentHealth, baseDefence, currentDefence) // 调用父类构造函数
     {
-        this.currentLevel = currentLevel;
+        this.level = currentLevel;
         this.maxLevel = maxLevel;
         this.baseExp = baseExp;
         this.currentExp = currentExp;
@@ -24,7 +24,7 @@ public class PlayerData : Characters {
         this.items =  items;
     }
 
-    private float LevelMultiplier { get { return 1 + (currentLevel - 1) * levelBuff; } }
+    private float LevelMultiplier { get { return 1 + (level - 1) * levelBuff; } }
 
     public void AddExp(int exp) {
         if (exp < 0) return;
@@ -32,16 +32,19 @@ public class PlayerData : Characters {
         while (currentExp >= baseExp) {
             LevelUp();
         }
+        Debug.Log($"玩家获得经验值{exp}");
+        EventManager.Publish<int>("PlayerGainExp", exp);
     }
 
     private void LevelUp() {
-        currentLevel = Mathf.Clamp(currentLevel + 1, 0, maxLevel);
+        level = Mathf.Clamp(level + 1, 0, maxLevel);
         currentExp -= baseExp;
 
         baseExp += (int)(baseExp * LevelMultiplier);
         maxHealth = (int)(maxHealth * LevelMultiplier);
         baseDefence += 1;
         RecoverPlayerState();
+        EventManager.Publish<int>("PlayerLevelUp",level);
     }
 
     public void RecoverPlayerState() {

@@ -12,6 +12,6 @@ public class TrackButton : MonoBehaviour {
     }
 
     private void TrackQuest() {
-        trackButton. GetComponentInChildren<TextMeshProUGUI>().text = "追踪中";
+        trackButton. GetComponentInChildren<TextMeshProUGUI>().text = "正在追踪";
     }
 }

@@ -2,23 +2,30 @@ using UnityEngine;
 
 public class WeaponAttack : MonoBehaviour {
     private Collider weaponCollider;
+    public TrailRenderer trailRenderer;
 
     void Awake() {
         weaponCollider = GetComponent<Collider>();
+
         if (weaponCollider != null) {
             weaponCollider.enabled = false;
+            trailRenderer.emitting = false; // ≥ı ºΩ˚”√ÕœŒ≤
+
         }
     }
 
     public void EnableWeaponCollider() {
         if (weaponCollider != null) {
             weaponCollider.enabled = true;
+            trailRenderer.emitting = true;
         }
+
     }
 
     public void DisableWeaponCollider() {
         if (weaponCollider != null) {
             weaponCollider.enabled = false;
+            trailRenderer.emitting = false;
         }
     }
 

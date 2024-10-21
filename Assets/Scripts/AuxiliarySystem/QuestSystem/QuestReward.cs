@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public class QuestReward {
     public int experience;  // 经验值
@@ -17,7 +18,7 @@ public class QuestReward {
         //player.AddGold(gold);
 
         foreach (Item item in rewardItems) {
-            player.AddItem(item);  // 假设有方法可以添加道具
+            player.AddItem(item);  
         }
     }
 }

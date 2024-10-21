@@ -82,7 +82,7 @@ public class InventoryPanel : MonoBehaviour {
         } else {
             currentSlot = null; // 没有物品时清空选择
         }
-        EventManager.Publish("ChangerCurrentSlot", currentSlot?.GetItem()); // 刷新面板
+        EventManager.Publish<Item>("ChangerCurrentSlot", currentSlot?.GetItem()); // 刷新面板
     }
 
     // 当物品槽被选中时
@@ -91,7 +91,7 @@ public class InventoryPanel : MonoBehaviour {
             currentSlot?.SetDefault();
             currentSlot = itemSlot;
             currentSlot.SetCurrentSlot();
-            EventManager.Publish("ChangerCurrentSlot", itemSlot.GetItem());
+            EventManager.Publish<Item>("ChangerCurrentSlot", itemSlot.GetItem());
         } else {
             Debug.LogWarning("Selected item is null.");
         }

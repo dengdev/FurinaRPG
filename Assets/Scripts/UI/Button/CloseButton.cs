@@ -10,6 +10,6 @@ public class CloseButton : MonoBehaviour {
     }
 
     private void CloseCurrentCanvas() {
-        CanvasManager.Instance.CloseCanvas(this.GetComponentInParent<Canvas>().name);
+        CanvasManager.Instance.ToggleCanvas(this.GetComponentInParent<Canvas>().name);
     }
 }
