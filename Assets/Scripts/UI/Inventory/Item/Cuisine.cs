@@ -6,10 +6,6 @@ public class Cuisine : Item {
     public int effectDuration;
 
     public override void Use(int quality) {
-        if (IsEmpty()) {
-            Debug.Log($"不能使用 {itemName}，数量为零。");
-            return;
-        }
         base.Use(quality);
         
         int adjustedHealing = healingAmount * quality;

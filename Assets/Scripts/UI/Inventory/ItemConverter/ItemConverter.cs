@@ -14,6 +14,7 @@ public class ItemConverter : DataCreationConverter<Item> {
             "Weapon" => new Weapon(),
             "Material" => new Material(),
             "Cuisine"=>new Cuisine(),
+            "CultivationMaterial"=>new CultivationMaterial(),
             _ => new Item()
         };
     }

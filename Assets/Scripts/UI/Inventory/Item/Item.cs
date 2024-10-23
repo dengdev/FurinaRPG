@@ -19,6 +19,10 @@ public class Item {
     }
 
     public virtual void Use(int quantity = 1) {
+        if (IsEmpty()) {
+            Debug.Log($"不能使用 {itemName}，数量为零。");
+            return;
+        }
 
         if (Quantity >= quantity) {
             Quantity -= quantity;

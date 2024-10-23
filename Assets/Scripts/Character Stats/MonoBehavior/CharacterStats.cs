@@ -34,7 +34,6 @@ public class CharacterStats : MonoBehaviour {
     public int BaseDefence { get => characterData?.baseDefence ?? 0; set => characterData.baseDefence = value; }
     public int CurrentDefence { get => characterData?.currentDefence ?? 0; set => characterData.currentDefence = value; }
 
-
     private void InitializeCharacterData() {
 
         if (TryGetComponent<PlayerController>(out _)) {
@@ -52,17 +51,11 @@ public class CharacterStats : MonoBehaviour {
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace) {
                 enemyHpCanvas = canvas;
-                Debug.Log("找到敌人血条画布");
             } else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
                 playerEffectCanvas = canvas;
-                Debug.Log("找到玩家特效画布");
             }else if(canvas.renderMode==RenderMode.ScreenSpaceOverlay) {
                 canvas.transform.GetChild(0).gameObject.SetActive(true);
             }
-        }
-
-        if (enemyHpCanvas == null || playerEffectCanvas == null) {
-            Debug.LogError("未找到合适的Canvas");
         }
     }
 

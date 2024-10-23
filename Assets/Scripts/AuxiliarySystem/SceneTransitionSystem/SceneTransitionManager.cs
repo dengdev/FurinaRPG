@@ -10,6 +10,7 @@ public class SceneManager : Singleton<SceneManager>, ISaveable {
     [SerializeField] private float fadeInTime = 0.3f;
     [SerializeField] private string currentSceneName;
     private Dictionary<TransferAnchorTag, TransferAnchor> anchorCache = new();
+    private bool isFirstGameStart = true;
 
     protected override void Awake() {
         base.Awake();
@@ -19,9 +20,16 @@ public class SceneManager : Singleton<SceneManager>, ISaveable {
     private void Start() {
         ISaveable saveable = this;
         saveable.AutoRegisteSaveable();
-        SaveManager.Instance.Load();
-        Debug.Log($"场景加载数据，当前场景为{currentSceneName}");
+
+        if (!isFirstGameStart) {
+            SaveManager.Instance.Load();
+            Debug.Log($"场景加载数据，当前场景为{currentSceneName}");
+        } else {
+            // 如果是第一次游玩，直接加载初始场景
+            TransitionToFirstScene();
+        }
         sceneFaderPrefab = ResourceManager.Instance.LoadResource<SceneFader>("Prefabs/Scene/FadeCanvas");
+
     }
 
     public void TransferToTargetAnchor(TransferAnchor anchor) {

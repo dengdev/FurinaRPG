@@ -16,32 +16,30 @@ public class GlobalDataManager : Singleton<GlobalDataManager> {
     }
 
     private void LoadAllData() {
-        LoadData<ItemList>("Resources/Data/items.json", itemList => {
+        LoadData<ItemList>("Data/items", itemList => {
             foreach (Item item in itemList.items) {
                 itemDictionary[item.itemId] = item;
             }
         }, new ItemConverter());
 
-        LoadData<EnemyDataList>("Resources/Data/enemies.json", enemyDataList => {
+        LoadData<EnemyDataList>("Data/enemies", enemyDataList => {
             foreach (EnemyData enemy in enemyDataList.enemies) {
                 enemyDictionary[enemy.characterName] = enemy;
             }
         });
     }
 
-    private void LoadData<T>(string path, Action<T> onDataLoaded, JsonConverter converter = null) {
-        string resultPath = Path.Combine(Application.dataPath, path);
-
-        if (File.Exists(resultPath)) {
-            string stringData = File.ReadAllText(resultPath, Encoding.UTF8);
+    private void LoadData<T>(string fileName, Action<T> onDataLoaded, JsonConverter converter = null) {
+        TextAsset jsonData = Resources.Load<TextAsset>(fileName);
+        if (jsonData != null) {
             T dataList = converter != null
-                ? JsonConvert.DeserializeObject<T>(stringData, converter)
-                : JsonConvert.DeserializeObject<T>(stringData);
-
+                ? JsonConvert.DeserializeObject<T>(jsonData.text, converter)
+                : JsonConvert.DeserializeObject<T>(jsonData.text);
             onDataLoaded(dataList);
         } else {
-            Debug.LogError("未能找到 JSON 文件: " + resultPath);
+            Debug.LogError($"未能找到 JSON 文件: {fileName}");
         }
+        Debug.Log(jsonData.text);
     }
 
     public Item GetItem(int itemID) {

@@ -55,7 +55,6 @@ public class PlayerHpBar : MonoBehaviour {
     }
 
     private void UpdateExpUI(int exp) {
-        Debug.Log($"更新经验UI{exp}");
         float currentExp = _PlayerData.currentExp;
         float baseExp = _PlayerData.baseExp;
         float eXPPercent = currentExp / baseExp;

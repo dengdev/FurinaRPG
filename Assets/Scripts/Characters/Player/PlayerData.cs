@@ -32,7 +32,6 @@ public class PlayerData : Characters {
         while (currentExp >= baseExp) {
             LevelUp();
         }
-        Debug.Log($"玩家获得经验值{exp}");
         EventManager.Publish<int>("PlayerGainExp", exp);
     }
 
@@ -60,10 +59,11 @@ public class PlayerData : Characters {
             item.Quantity = quality;
             items.Add(item);
         }
+        EventManager.Publish<(Item,int)>("PlayerGainItem", (item, quality));
     }
     public void Heal(int amount) {
         currentHealth = Mathf.Clamp(currentHealth + amount, 0, maxHealth);
-        Debug.Log($"玩家恢复了 {amount} 生命值，当前生命值: {currentHealth}");
+        EventManager.Publish<(int, int)>("ChangePlayerHp", (currentHealth, maxHealth));
     }
 
 

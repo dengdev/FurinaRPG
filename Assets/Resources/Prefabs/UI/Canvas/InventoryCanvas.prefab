@@ -540,10 +540,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269\u54C1\u4FE1\u606F\u8BF4\u660E\u680F\u8FD9\u91CC\u662F\u7269"
+  m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: f0225c1f9f77f334dafe3123d4a0c79b, type: 2}
-  m_sharedMaterial: {fileID: -8134261921187287807, guid: f0225c1f9f77f334dafe3123d4a0c79b, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 9153673691a7d44428a8cc94910e2263, type: 2}
+  m_sharedMaterial: {fileID: 4627490653434396789, guid: 9153673691a7d44428a8cc94910e2263, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -567,13 +567,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 35
+  m_fontSizeBase: 35
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 1
+  m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535

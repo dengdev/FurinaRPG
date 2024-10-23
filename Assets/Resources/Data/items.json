@@ -3,9 +3,9 @@
     {
       "itemId": 1,
       "itemName": "树莓",
-      "maxStack": 20,
+      "maxStack": 99,
       "iconPath": "树莓",
-      "description": "随处可见的树莓，适合做成果酱。",
+      "description": "一种常见的树莓，是制作果酱的主要原料之一。",
       "quality": "OneStar",
       "type": "Material",
       "quantity": 0
@@ -13,9 +13,9 @@
     {
       "itemId": 2,
       "itemName": "番茄",
-      "maxStack": 20,
+      "maxStack": 99,
       "iconPath": "番茄",
-      "description": "一种新鲜的番茄。",
+      "description": "酸甜可口的番茄，适合用于各种美食的制作。",
       "quality": "TwoStar",
       "type": "Material",
       "quantity": 0
@@ -25,7 +25,7 @@
       "itemName": "石珀",
       "maxStack": 99,
       "iconPath": "石珀",
-      "description": "一种珍贵的材料，色泽明亮，适合做饰品。",
+      "description": "一种珍贵的材料，色泽明亮，适合用于制作精美饰品。",
       "quality": "ThreeStar",
       "type": "Material",
       "quantity": 0
@@ -33,24 +33,25 @@
     {
       "itemId": 4,
       "itemName": "蓝书",
-      "maxStack": 10,
+      "maxStack": 99,
       "iconPath": "蓝书",
-      "description": "一本关于冒险者的书籍，阅读后能够增加经验！",
+      "description": "一本关于冒险者的书籍，阅读后能够提升50点经验值！",
       "quality": "ThreeStar",
-      "type": "Cuisine",
-      "quantity": 0
+      "type": "CultivationMaterial",
+      "quantity": 0,
+      "experience": 50
     },
     {
       "itemId": 5,
       "itemName": "蒙德土豆饼",
       "maxStack": 15,
       "iconPath": "蒙德土豆饼",
-      "description": "一种美味的土豆饼，恢复健康。",
+      "description": "蒙德的特色美食，美味的土豆饼，能恢复50点生命值，并增加2点防御力。",
       "quality": "ThreeStar",
       "type": "Cuisine",
       "quantity": 0,
       "healingAmount": 50,
-      "defenseBuff": 10,
+      "defenseBuff": 2,
       "effectDuration": 60
     }
   ]
