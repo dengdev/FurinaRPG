@@ -14,7 +14,7 @@ public class QuestDetailPanel : MonoBehaviour {
 
     public void DisplayQuestDetails(Quest quest) {
         if (currentQuest != quest) {
-            //trackButton.
+            trackButton.SetQuest(quest);
             currentQuest = quest;
             title.text = quest.title;
             description.text = quest.description;
@@ -23,9 +23,8 @@ public class QuestDetailPanel : MonoBehaviour {
     }
 
     private void UpdateRewardSlots(List<Item> rewardItems) {
-        int rewardCount = rewardItems.Count;
 
-        for (int i = 0; i < rewardCount; i++) {
+        for (int i = 0; i < rewardItems.Count; i++) {
             Image slot;
 
             if (i >= rewardSlots.Count) {
@@ -40,7 +39,7 @@ public class QuestDetailPanel : MonoBehaviour {
             slot.transform.GetChild(0).GetComponent<Image>().sprite = rewardItems[i].LoadIcon();
         }
 
-        for (int i = rewardCount; i < rewardSlots.Count; i++) {
+        for (int i = rewardItems.Count; i < rewardSlots.Count; i++) {
             rewardSlots[i].gameObject.SetActive(false);
         }
     }

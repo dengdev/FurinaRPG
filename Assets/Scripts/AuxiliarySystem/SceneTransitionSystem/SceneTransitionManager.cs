@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -78,6 +79,10 @@ public class SceneManager : Singleton<SceneManager>, ISaveable {
     }
 
     IEnumerator LoadSceneWithFade(string sceneName, bool isMainMenu = false) {
+        //清空状态
+        DOTween.KillAll();
+        GameManager.Instance.ClearPools();
+
         SceneFader fader = Instantiate(sceneFaderPrefab);
         yield return StartCoroutine(fader.FadeOut(fadeOutTime));
         yield return UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName);
@@ -126,6 +131,10 @@ public class SceneManager : Singleton<SceneManager>, ISaveable {
 
     public void LoadSceneToContinueGame() {
         SaveManager.Instance.Load();
+        if(currentSceneName == "MainMenuScene") {
+            Debug.Log("暂时没有保存的数据");
+            return;
+        }
         if (!string.IsNullOrEmpty(currentSceneName)) {
             StartCoroutine(LoadSceneWithFade(currentSceneName));
             Debug.Log($"要去的场景{currentSceneName}为保存的场景");

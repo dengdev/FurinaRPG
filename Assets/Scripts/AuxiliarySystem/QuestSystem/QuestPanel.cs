@@ -4,27 +4,26 @@ using UnityEngine.UI;
 
 public class QuestPanel : MonoBehaviour {
 
-    private QuestSlot currentSelectedQuest;
     public Transform questParent;
     public QuestDetailPanel questDetailPanel;
 
     private List<QuestSlot> questSlots = new();
     private HashSet<string> displayedQuests = new();
+    private QuestSlot currentSelectedQuest;
 
     public QuestSlot questSlotPrefab;
 
     private void Start() {
-        RefreshQuestSlots(QuestManager.Instance.questList);
-    }
 
-    private  void RefreshQuestSlots(List<Quest> questList) {
-        foreach (Quest quest in questList) {
+        foreach (Quest quest in QuestManager.Instance.questList) {
             if (!displayedQuests.Contains(quest.title)) {
                 CreateQuestSlot(quest);  // 仅为新任务创建任务槽
                 displayedQuests.Add(quest.title);  // 标记任务已显示
             }
         }
     }
+
+        
 
     public void CreateQuestSlot(Quest quest) {
         QuestSlot tmpSlot = Instantiate(questSlotPrefab, questParent);
@@ -40,7 +39,10 @@ public class QuestPanel : MonoBehaviour {
             SelectQuest(tmpSlot);
             questDetailPanel.DisplayQuestDetails(quest);
         }
-        quest.StartQuest();
+
+        if (quest.status == QuestStatus.Available) {
+            quest.StartQuest();
+        }
     }
 
 

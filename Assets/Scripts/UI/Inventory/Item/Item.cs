@@ -19,10 +19,12 @@ public class Item {
     }
 
     public virtual void Use(int quantity = 1) {
+
         if (Quantity >= quantity) {
             Quantity -= quantity;
-            // 在这里可以实现物品使用的其他逻辑
-            GameManager.Instance.playerData.items.Remove(this);
+            if (Quantity <= 0) {
+                GameManager.Instance.playerData.items.Remove(this);
+            }
             Debug.Log($"使用物品: {itemName}, 剩余数量: {Quantity}");
         }
     }

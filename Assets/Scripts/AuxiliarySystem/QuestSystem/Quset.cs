@@ -7,6 +7,7 @@ public class Quest {
     public QuestReward reward;
     public int targetCount;
     public int currentCount;
+    public bool isTrack;
 
     public Quest(string title, string description, int targetCount, QuestReward reward,QuestStatus questStatus= QuestStatus.Available) {
         this.title = title;
@@ -14,6 +15,7 @@ public class Quest {
         this.targetCount = targetCount;
         this.reward = reward;
         this.status = questStatus;
+        this.isTrack = false;
     }
 
     public void StartQuest() {
@@ -22,7 +24,7 @@ public class Quest {
     }
 
     public void UpdateProgress() {
-        currentCount++;
+        currentCount = Mathf.Min(currentCount + 1, targetCount); // 防止超过目标
         Debug.Log($"任务进度: {currentCount}/{targetCount}");
 
         if (currentCount >= targetCount) {

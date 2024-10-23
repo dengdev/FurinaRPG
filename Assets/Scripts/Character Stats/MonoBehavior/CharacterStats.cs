@@ -16,14 +16,12 @@ public class CharacterStats : MonoBehaviour {
     public bool isCritical; // 是否暴击
     public bool isAttacking;
 
-    private GameObject damageText;
-    private Canvas worldSpaceCanvas;//红和白跳字
-    private Canvas cameraSpaceCanvas;
+    private Canvas enemyHpCanvas;
+    private Canvas playerEffectCanvas;
     private Animator animator;
 
     private void Awake() {
         animator = GetComponent<Animator>();
-        damageText = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/UI/DamageText");
         FindCanvas();
     }
 
@@ -43,27 +41,27 @@ public class CharacterStats : MonoBehaviour {
             playerData = characterData as PlayerData;
             if (playerData == null) {
                 Debug.LogError("玩家身上的数据为空，还没有加载数据");
-            } else {
-                GameObject.Find("PlayerHealthCanvas").transform.GetChild(0).gameObject.SetActive(true);
-            }
+            } 
         } else {
             enemyData = characterData as EnemyData;
         }
-
     }
+
     private void FindCanvas() {
 
         foreach (Canvas canvas in FindObjectsOfType<Canvas>()) {
             if (canvas.renderMode == RenderMode.WorldSpace) {
-                worldSpaceCanvas = canvas;
-                Debug.Log("找到世界画布");
+                enemyHpCanvas = canvas;
+                Debug.Log("找到敌人血条画布");
             } else if (canvas.renderMode == RenderMode.ScreenSpaceCamera) {
-                cameraSpaceCanvas = canvas;
-                Debug.Log("找到相机画布");
+                playerEffectCanvas = canvas;
+                Debug.Log("找到玩家特效画布");
+            }else if(canvas.renderMode==RenderMode.ScreenSpaceOverlay) {
+                canvas.transform.GetChild(0).gameObject.SetActive(true);
             }
         }
 
-        if (worldSpaceCanvas == null || cameraSpaceCanvas == null) {
+        if (enemyHpCanvas == null || playerEffectCanvas == null) {
             Debug.LogError("未找到合适的Canvas");
         }
     }
@@ -107,26 +105,28 @@ public class CharacterStats : MonoBehaviour {
         // 使用ValueTuple<int, int>
         if (defender.characterData is PlayerData) {
             EventManager.Publish<(int, int)>("ChangePlayerHp", (defender.CurrentHealth, defender.MaxHealth));
-            ShowDamageText_World(defender, damage);
+            ShowEnemyDamage(defender, damage);
 
         } else if(defender.characterData is EnemyData) {
             EventManager.Publish<(int, int)>("ChangeEnemyHp", (defender.CurrentHealth, defender.MaxHealth));
-            ShowDamagePopupCameraSpace(defender, damage);
+            ShowPlayerDamage(defender, damage);
         }
     }
 
-    private void ShowDamagePopupCameraSpace(CharacterStats defender, int damage) {
-        if (GameManager.Instance.damageTextPool == null) {
-            GameManager.Instance.damageTextPool = new ObjectPool(this.damageText, 5, 20, cameraSpaceCanvas.transform);
+    private void ShowPlayerDamage(CharacterStats defender, int damage) {
+        GameObject whiteDamge = ResourceManager.Instance.LoadResource<GameObject>("Prefabs/UI/Effect/WhiteDamage");
+
+        if (GameManager.Instance.whiteDamgePool == null) {
+            GameManager.Instance.whiteDamgePool = new ObjectPool(whiteDamge, 5, 20, playerEffectCanvas.transform);
         }
-        GameObject damageText = GameManager.Instance.damageTextPool.GetFromPool();
+        GameObject damageText = GameManager.Instance.whiteDamgePool.GetFromPool();
         RectTransform rectTransform = damageText.GetComponent<RectTransform>();
         TextMeshProUGUI _text = damageText.GetComponent<TextMeshProUGUI>();
         CanvasGroup canvasGroup = damageText.GetComponent<CanvasGroup>();
 
         Vector2 screenPosition = Camera.main.WorldToScreenPoint(defender.transform.position);
         screenPosition.y += 150f;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(cameraSpaceCanvas.GetComponent<RectTransform>(), screenPosition, cameraSpaceCanvas.worldCamera, out Vector2 anchorPosition);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(playerEffectCanvas.GetComponent<RectTransform>(), screenPosition, playerEffectCanvas.worldCamera, out Vector2 anchorPosition);
 
         rectTransform.anchoredPosition = anchorPosition;
         rectTransform.localScale = Vector3.zero;
@@ -139,7 +139,7 @@ public class CharacterStats : MonoBehaviour {
         rectTransform.DOScale(Vector3.one, 0.8f).SetEase(Ease.OutBack);
         rectTransform.DOAnchorPos(targetPosition, 2f).SetEase(Ease.OutQuad);
         canvasGroup.DOFade(0f, 1f).SetDelay(0.6f).OnComplete(() => {
-            GameManager.Instance.damageTextPool.ReturnToPool(damageText);
+            GameManager.Instance.whiteDamgePool.ReturnToPool(damageText);
         });
     }
     private void TriggerHitAnimation(CharacterStats defender) {
@@ -166,8 +166,8 @@ public class CharacterStats : MonoBehaviour {
         }
     }
 
-    private void ShowDamageText_World(CharacterStats defender, int damage) {
-        Transform damageShow = Instantiate(Resources.Load<GameObject>("Prefabs/UI/DamageJumpShow"), worldSpaceCanvas.transform).transform;
+    private void ShowEnemyDamage(CharacterStats defender, int damage) {
+        Transform redDamage = Instantiate(Resources.Load<GameObject>("Prefabs/UI/Effect/RedDamage"), enemyHpCanvas.transform).transform;
         float randomRange = 0.8f;
         Vector3 randomOffset = new Vector3(
             UnityEngine.Random.Range(-randomRange, randomRange),
@@ -175,14 +175,14 @@ public class CharacterStats : MonoBehaviour {
             UnityEngine.Random.Range(-randomRange, randomRange)
         );
 
-        damageShow.position = defender.transform.position + randomOffset;
-        damageShow.forward = Camera.main.transform.forward;
-        damageShow.GetComponent<TextMeshProUGUI>().text = damage.ToString();
+        redDamage.position = defender.transform.position + randomOffset;
+        redDamage.forward = Camera.main.transform.forward;
+        redDamage.GetComponent<TextMeshProUGUI>().text = damage.ToString();
 
-        StartCoroutine(DamageText_MoveAndFade_World(damageShow));
+        StartCoroutine(RedDamageShow(redDamage));
     }
 
-    private IEnumerator DamageText_MoveAndFade_World(Transform damageShow) {
+    private IEnumerator RedDamageShow(Transform damageShow) {
         float duration = 1.5f;
         float elapsed = 0f;
         float height = 0.5f;

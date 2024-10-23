@@ -8,8 +8,9 @@ public class GameManager : Singleton<GameManager>, ISaveable {
     private List<IGameOverObserver> endGameObservers = new List<IGameOverObserver>();
 
     public ObjectPool rockPool;
-    public ObjectPool enemyHPPool;
-    public ObjectPool damageTextPool;
+    public ObjectPool whiteDamgePool;
+    public ObjectPool enemyHpPool;
+
 
     protected override void Awake() {
         base.Awake();
@@ -30,6 +31,12 @@ public class GameManager : Singleton<GameManager>, ISaveable {
     private void Start() {
         ISaveable saveable = this;
         saveable.AutoRegisteSaveable();
+    }
+
+    public void ClearPools() {
+        rockPool= null;
+            whiteDamgePool =null;
+        enemyHpPool = null;
     }
 
     public void RegisterPlayer(CharacterStats player) {
